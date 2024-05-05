@@ -1,4 +1,4 @@
-package com.hawkerapp.repositories
+package com.hawkerapp.app.repositories
 
 import android.content.Context
 import com.hawkerapp.app.database.HawkerDatabase

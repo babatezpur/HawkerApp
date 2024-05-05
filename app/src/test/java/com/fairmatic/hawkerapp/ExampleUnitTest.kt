@@ -1,4 +1,4 @@
-package com.fairmatic.hawkerapp
+package com.hawkerapp.app
 
 import org.junit.Test
 

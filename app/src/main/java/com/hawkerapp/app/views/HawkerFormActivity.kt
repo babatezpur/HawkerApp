@@ -7,12 +7,12 @@ import android.util.Log
 import android.widget.Button
 import android.widget.Toast
 import androidx.fragment.app.FragmentManager
-import com.fairmatic.hawkerapp.R
+import com.hawkerapp.app.R
 import com.hawkerapp.app.managers.HawkerManager
 import com.hawkerapp.app.models.HawkerFormData
 import com.hawkerapp.app.network.RetrofitHelper
 import com.hawkerapp.app.utils.LocationProvider
-import com.hawkerapp.repositories.HawkerLoginDataRepository
+import com.hawkerapp.app.repositories.HawkerLoginDataRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

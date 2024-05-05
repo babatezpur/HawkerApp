@@ -4,7 +4,7 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
-import com.fairmatic.hawkerapp.R
+import com.hawkerapp.app.R
 import com.hawkerapp.app.database.HawkerDatabase
 import com.hawkerapp.app.views.HawkerFormActivity
 import com.hawkerapp.app.views.PreHawkerScreenActivity

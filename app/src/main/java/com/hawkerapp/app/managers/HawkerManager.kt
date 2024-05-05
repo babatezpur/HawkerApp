@@ -4,8 +4,8 @@ import android.content.Context
 import android.util.Log
 import com.hawkerapp.app.models.HawkerFormData
 import com.hawkerapp.app.models.HawkerInfo
-import com.hawkerapp.repositories.HawkerInfoRepository
-import com.hawkerapp.repositories.HawkerLoginDataRepository
+import com.hawkerapp.app.repositories.HawkerInfoRepository
+import com.hawkerapp.app.repositories.HawkerLoginDataRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

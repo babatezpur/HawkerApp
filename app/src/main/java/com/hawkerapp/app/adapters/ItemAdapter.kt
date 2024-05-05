@@ -3,7 +3,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import androidx.recyclerview.widget.RecyclerView
-import com.fairmatic.hawkerapp.R
+import com.hawkerapp.app.R
 import com.hawkerapp.app.models.Item
 
 class ItemAdapter(private val itemsList: ArrayList<Item>) :

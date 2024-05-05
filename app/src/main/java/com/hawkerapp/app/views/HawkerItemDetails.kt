@@ -12,7 +12,7 @@ import android.widget.Button
 import android.widget.EditText
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.fairmatic.hawkerapp.R
+import com.hawkerapp.app.R
 // TODO: Rename parameter arguments, choose names that match
 
 

@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace 'com.fairmatic.hawkerapp'
+    namespace 'com.hawkerapp.app'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.fairmatic.hawkerapp"
+        applicationId "com.hawkerapp.app"
         minSdk 24
         targetSdk 34
         versionCode 1

@@ -6,9 +6,9 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.ProgressBar
-import com.fairmatic.hawkerapp.R
+import com.hawkerapp.app.R
 import com.hawkerapp.app.network.RetrofitHelper
-import com.hawkerapp.repositories.HawkerInfoRepository
+import com.hawkerapp.app.repositories.HawkerInfoRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
