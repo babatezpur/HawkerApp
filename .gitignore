@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 # Gradle files
 .gradle/
 build/
@@ -33,6 +34,8 @@ google-services.json
 # Android Profiling
 *.hprof
 =======
+=======
+>>>>>>> dd1195a (First draft of the code: MV model so far (with managers to facilitate))
 *.iml
 .gradle
 /local.properties
@@ -48,4 +51,7 @@ google-services.json
 .externalNativeBuild
 .cxx
 local.properties
+<<<<<<< HEAD
+>>>>>>> dd1195a (First draft of the code: MV model so far (with managers to facilitate))
+=======
 >>>>>>> dd1195a (First draft of the code: MV model so far (with managers to facilitate))
