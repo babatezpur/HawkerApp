@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
+import com.google.firebase.FirebaseApp
 import com.hawkerapp.app.R
 import com.hawkerapp.app.database.HawkerDatabase
 import com.hawkerapp.app.views.HawkerFormActivity
@@ -14,6 +15,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        FirebaseApp.initializeApp(this)
 
         HawkerDatabase.getInstance(this)
     }
