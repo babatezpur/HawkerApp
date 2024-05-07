@@ -3,6 +3,12 @@ package com.hawkerapp.app
 import android.util.Log
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import com.hawkerapp.app.managers.HawkerManager
+import com.hawkerapp.app.models.FCMData
+import com.hawkerapp.app.network.RetrofitHelper
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MyFirebaseMessagingService: FirebaseMessagingService() {
 
@@ -17,7 +23,17 @@ class MyFirebaseMessagingService: FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        Log.d("HawkerApp Firebase", "onNewToken triggerred: $token")
+        Log.d("HawkerApp Firebase", "onNewToken triggered: $token")
+        CoroutineScope(Dispatchers.Default).launch {
+            sendFCMTokenToServer(token)
+        }
         // Log and optionally send the new registration token to your app server.
+    }
+
+    private suspend fun sendFCMTokenToServer(token: String){
+        val hawkerManager = HawkerManager(applicationContext)
+        val currentHawkerId = hawkerManager.getActiveHawkerId()
+        val fcmData = FCMData(token, currentHawkerId)
+        RetrofitHelper.sendToken(fcmData)
     }
 }

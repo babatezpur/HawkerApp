@@ -1,5 +1,6 @@
 package com.hawkerapp.app.network
 
+import com.hawkerapp.app.models.FCMData
 import com.hawkerapp.app.models.HawkerFormData
 import com.hawkerapp.app.models.HawkerInfo
 import com.hawkerapp.app.models.UserData
@@ -31,6 +32,14 @@ interface HawkersAPI {
     fun fetchVisitRequestsAsync(
         @Path("id") id: String
     ): Call<List<UserRequestData>>
+
+    @POST("token")
+    @Headers(
+        "Content-Type: application/json",
+        "Authorization: Basic ZGV2cmFqOmphcnZlZA==",
+        "Cookie: JSESSIONID=7BF55B5F644787F928FEA318B4244E06"
+    )
+    fun sendFCMToken(@Body fcmData: FCMData) : Call<Void>
 
     @Headers("Content-Type: application/json")
     @POST("hawkers")

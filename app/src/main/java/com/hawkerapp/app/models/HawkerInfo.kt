@@ -106,13 +106,7 @@ data class Item(
 }
 
 
-
-enum class Category {
-    FOOD,
-    FRUITS,
-    VEGETABLES,
-    GROCERY,
-    KITCHENWARE,
-    CLOTHING,
-    OTHER
-}
+data class FCMData(
+    val token: String,
+    val hawkerId: String
+)
