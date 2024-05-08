@@ -30,7 +30,7 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
     private lateinit var btnFetchRequests:  Button
     private lateinit var hawkerManager: HawkerManager
-    private lateinit var activeHawkerId: String
+    private var activeHawkerId: String? = null
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1
@@ -63,7 +63,11 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun loadCustomers() {
         // Fetch customers from the server
         // Display customers on the map
-        val users = RetrofitHelper.fetchUserRequests(activeHawkerId) {
+        if(activeHawkerId == null){
+            Log.d("hawkerViewActivity","No active hawker")
+            return
+        }
+        val users = RetrofitHelper.fetchUserRequests(activeHawkerId!!) {
             Log.d("HawkerViewActivity", "Users fetched")
             for (user in it) {
                 val userLocation = LatLng(user.location.latitude, user.location.longitude)

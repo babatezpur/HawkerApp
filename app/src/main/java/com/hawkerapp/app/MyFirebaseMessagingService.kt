@@ -32,7 +32,7 @@ class MyFirebaseMessagingService: FirebaseMessagingService() {
 
     private suspend fun sendFCMTokenToServer(token: String){
         val hawkerManager = HawkerManager(applicationContext)
-        val currentHawkerId = hawkerManager.getActiveHawkerId()
+        val currentHawkerId = hawkerManager.getActiveHawkerId() ?: return
         val fcmData = FCMData(token, currentHawkerId)
         RetrofitHelper.sendToken(fcmData)
     }

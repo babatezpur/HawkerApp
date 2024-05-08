@@ -27,13 +27,13 @@ object RetrofitHelper {
     fun sendToken(fcmData : FCMData) {
         val api = getInstance().create(HawkersAPI::class.java)
         val call = api.sendFCMToken(fcmData)
-
+        Log.d("RetrofitHelper", "Enqueuing the call for token to server")
         call.enqueue(object : Callback<Void> {
             override fun onResponse(call: Call<Void>, response: Response<Void>) {
                 if(response.isSuccessful) {
                     Log.d("RetrofitHelper", "Token sent successfully")
                 } else {
-                    Log.d("retrofitHelper", "Token sending wasn't successful")
+                    Log.d("retrofitHelper", "Token sending wasn't successful: ${response}")
                 }
             }
 
