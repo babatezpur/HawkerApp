@@ -61,7 +61,7 @@ class MainActivity : AppCompatActivity() {
             val currentHawkerId = HawkerManager(context).getActiveHawkerId()
             if (currentHawkerId!= null){
                 val fcmData = FCMData(token, currentHawkerId)
-                Log.d("MainActivity", "Sending token to Server")
+                Log.d("MainActivity", "Sending token to Server: $token")
                 RetrofitHelper.sendToken(fcmData)
             }
         }
