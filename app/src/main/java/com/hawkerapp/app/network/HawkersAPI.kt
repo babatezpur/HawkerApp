@@ -33,7 +33,7 @@ interface HawkersAPI {
         @Path("id") id: String
     ): Call<List<UserRequestData>>
 
-    @POST("token")
+    @POST("hawkers/token")
     @Headers(
         "Content-Type: application/json",
         "Authorization: Basic ZGV2cmFqOmphcnZlZA==",

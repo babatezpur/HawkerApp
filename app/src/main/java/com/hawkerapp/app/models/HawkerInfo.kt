@@ -105,8 +105,10 @@ data class Item(
     }
 }
 
-
+@Serializable
 data class FCMData(
+    @SerializedName("token")
     val token: String,
+    @SerializedName("hawkerId")
     val hawkerId: String
 )
