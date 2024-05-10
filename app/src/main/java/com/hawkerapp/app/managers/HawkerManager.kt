@@ -23,7 +23,7 @@ class HawkerManager (private val context: Context) {
         hawkerLoginDataRepository.insertHawkerLoginData(hawkerLoginData)
     }
 
-    suspend fun getActiveHawkerId(): String {
+    suspend fun getActiveHawkerId(): String? {
         return hawkerLoginDataRepository.getActiveHawkerId()
     }
 

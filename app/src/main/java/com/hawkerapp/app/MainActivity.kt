@@ -1,19 +1,32 @@
 package com.hawkerapp.app
 
+import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
+import com.google.firebase.FirebaseApp
+import com.google.firebase.messaging.FirebaseMessaging
+import com.google.firebase.messaging.FirebaseMessagingService
 import com.hawkerapp.app.R
 import com.hawkerapp.app.database.HawkerDatabase
+import com.hawkerapp.app.managers.HawkerManager
+import com.hawkerapp.app.models.FCMData
+import com.hawkerapp.app.network.RetrofitHelper
 import com.hawkerapp.app.views.HawkerFormActivity
 import com.hawkerapp.app.views.PreHawkerScreenActivity
 import com.hawkerapp.app.views.PreUserScreenSplashActivity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        initializeFirebaseAndSendToken()
 
         HawkerDatabase.getInstance(this)
     }
@@ -32,5 +45,25 @@ class MainActivity : AppCompatActivity() {
         }
 
 
+    }
+
+    private fun initializeFirebaseAndSendToken() {
+        FirebaseApp.initializeApp(this)
+
+        FirebaseMessaging.getInstance().token.addOnSuccessListener {
+            Log.d("MainActivity", "Token received: $it")
+            sendTokenToServer(this, it)
+        }
+    }
+
+    fun sendTokenToServer(context: Context, token: String){
+        CoroutineScope(Dispatchers.IO).launch {
+            val currentHawkerId = HawkerManager(context).getActiveHawkerId()
+            if (currentHawkerId!= null){
+                val fcmData = FCMData(token, currentHawkerId)
+                Log.d("MainActivity", "Sending token to Server: $token")
+                RetrofitHelper.sendToken(fcmData)
+            }
+        }
     }
 }

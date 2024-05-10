@@ -13,7 +13,7 @@ interface HawkerLoginDataDao {
     fun insertHawkerLoginData(hawkerData: HawkerFormData) : Long
 
     @Query("SELECT id FROM hawker_data WHERE is_active = 1")
-    fun getActiveHawkerId(): String
+    fun getActiveHawkerId(): String?
 
     @Query("UPDATE hawker_data SET is_active = 0 WHERE id != :exceptDriverId")
     fun markAllHawkersInactive(exceptDriverId: String)

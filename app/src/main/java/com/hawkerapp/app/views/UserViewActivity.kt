@@ -2,7 +2,10 @@ package com.hawkerapp.app.views
 
 import com.hawkerapp.app.models.HawkerInfo
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import android.location.Location
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -13,6 +16,7 @@ import android.widget.ListView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
+import androidx.core.content.res.ResourcesCompat
 import com.hawkerapp.app.R
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -20,6 +24,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MarkerOptions
@@ -174,14 +179,20 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
         }
     }
 
+    @SuppressLint("UseCompatLoadingForDrawables")
     private fun processCoordinates(builder: LatLngBounds.Builder) {
         val hawkers = intent.extras?.getParcelableArray("hawkers")
         Log.d("hawkerMap", "Hawkers: ${hawkers.toString()}")
+        val bitmapdraw = ResourcesCompat.getDrawable(resources, R.drawable.driver_icon, null) as BitmapDrawable
+        var b = bitmapdraw.bitmap
+        b = b.resize(75, 75) // Resize the image to width: 50, height: 50
+
+        val smallMarker = BitmapDescriptorFactory.fromBitmap(b)
         if (hawkers != null) {
             for (hawker in hawkers) {
                 val hawkerInfo = hawker as HawkerInfo
                 val hawkerLatLng = LatLng(hawkerInfo.location.latitude, hawkerInfo.location.longitude)
-                mMap.addMarker(MarkerOptions().position(hawkerLatLng).title(hawkerInfo.name).snippet(hawkerInfo.id))
+                mMap.addMarker(MarkerOptions().position(hawkerLatLng).title(hawkerInfo.name).snippet(hawkerInfo.id))?.setIcon(smallMarker)
                 builder.include(hawkerLatLng)
             }
             val bounds = builder.build()
@@ -190,6 +201,11 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
             Log.d("hawkerMap", "Moving camera, bounds: $bounds, padding: $padding")
             mMap.moveCamera(cameraUpdate)
         }
+    }
+
+    private fun Bitmap.resize(width: Int, height: Int): Bitmap {
+        val mutableBitmap = this.copy(Bitmap.Config.ARGB_8888, true)
+        return Bitmap.createScaledBitmap(mutableBitmap, width, height, false)
     }
 
     fun findHawkerById(id: String): HawkerInfo? {

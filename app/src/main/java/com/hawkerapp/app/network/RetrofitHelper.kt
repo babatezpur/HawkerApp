@@ -2,6 +2,7 @@ package com.hawkerapp.app.network
 
 import com.hawkerapp.app.models.HawkerInfo
 import android.util.Log
+import com.hawkerapp.app.models.FCMData
 import com.hawkerapp.app.models.HawkerFormData
 import com.hawkerapp.app.models.UserData
 import com.hawkerapp.app.models.UserRequestData
@@ -21,6 +22,25 @@ object RetrofitHelper {
             // we need to add converter factory to
             // convert JSON object to Java object
             .build()
+    }
+
+    fun sendToken(fcmData : FCMData) {
+        val api = getInstance().create(HawkersAPI::class.java)
+        val call = api.sendFCMToken(fcmData)
+        Log.d("RetrofitHelper", "Enqueuing the call for token to server")
+        call.enqueue(object : Callback<Void> {
+            override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                if(response.isSuccessful) {
+                    Log.d("RetrofitHelper", "Token sent successfully")
+                } else {
+                    Log.d("retrofitHelper", "Token sending wasn't successful: ${response}")
+                }
+            }
+
+            override fun onFailure(call: Call<Void>, t: Throwable) {
+                Log.d("RetrofitHelper", "Token sending failed")
+            }
+        })
     }
 
     fun sendHawkersData(hawkerData: HawkerFormData, onSuccess: (HawkerInfo) -> Unit) {

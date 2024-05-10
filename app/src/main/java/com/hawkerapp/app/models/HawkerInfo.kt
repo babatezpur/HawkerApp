@@ -105,14 +105,10 @@ data class Item(
     }
 }
 
-
-
-enum class Category {
-    FOOD,
-    FRUITS,
-    VEGETABLES,
-    GROCERY,
-    KITCHENWARE,
-    CLOTHING,
-    OTHER
-}
+@Serializable
+data class FCMData(
+    @SerializedName("token")
+    val token: String,
+    @SerializedName("hawkerId")
+    val hawkerId: String
+)

@@ -12,7 +12,7 @@ class HawkerLoginDataRepository(context: Context) {
         hawkerLoginDataDao.insertHawkerLoginData(hawkerLoginData)
     }
 
-    suspend fun getActiveHawkerId(): String {
+    suspend fun getActiveHawkerId(): String? {
         return hawkerLoginDataDao.getActiveHawkerId()
     }
 
