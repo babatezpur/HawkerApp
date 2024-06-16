@@ -6,9 +6,15 @@ import android.location.Location
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.Gravity
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
+import android.widget.PopupWindow
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.hawkerapp.app.R
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -18,7 +24,9 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import com.hawkerapp.app.adapters.VisitRequestAdapter
 import com.hawkerapp.app.managers.HawkerManager
+import com.hawkerapp.app.models.UserRequestData
 import com.hawkerapp.app.network.RetrofitHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +39,9 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var btnFetchRequests:  Button
     private lateinit var hawkerManager: HawkerManager
     private var activeHawkerId: String? = null
+    private lateinit var floatingWindow: PopupWindow
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var adapter: VisitRequestAdapter
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1
@@ -61,19 +72,78 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun loadCustomers() {
+
+//        val floatingWindowLayout = layoutInflater.inflate(R.layout.visit_requests_floating_window, null)
+//
+//        floatingWindow = PopupWindow(
+//            floatingWindowLayout,
+//            ViewGroup.LayoutParams.WRAP_CONTENT,
+//            ViewGroup.LayoutParams.WRAP_CONTENT,
+//            true
+//        )
+//
+//        //floatingWindow.showAtLocation(window.decorView.rootView, Gravity.CENTER, 0, 0)
+//        if (floatingWindow.isShowing) {
+//            Log.d("HawkerViewActivity", "Popup window is showing")
+//        } else {
+//            Log.e("HawkerViewActivity", "Popup window failed to show")
+//        }
+
+
         // Fetch customers from the server
         // Display customers on the map
         if(activeHawkerId == null){
             Log.d("hawkerViewActivity","No active hawker")
             return
         }
-        val users = RetrofitHelper.fetchUserRequests(activeHawkerId!!) {
+        RetrofitHelper.fetchUserRequests(activeHawkerId!!) {
             Log.d("HawkerViewActivity", "Users fetched")
+            val customers = it
+
             for (user in it) {
                 val userLocation = LatLng(user.location.latitude, user.location.longitude)
                 mMap.addMarker(MarkerOptions().position(userLocation).title(user.customerName))
             }
+
+
+
+            Log.d("HawkerViewActivity", "Inflating the requests popup with customers: ${customers.size}")
+            val floatingWindowLayout = layoutInflater.inflate(R.layout.visit_requests_floating_window, null)
+            val recyclerView = floatingWindowLayout.findViewById<RecyclerView>(R.id.visitReqsRecyclerView)
+
+            Log.d("HawkerViewActivity", "The linearlayoutmanager is : ${recyclerView.layoutManager}")
+            if( recyclerView.layoutManager == null)
+                recyclerView.layoutManager = LinearLayoutManager(this)
+
+
+            val adapter = VisitRequestAdapter(customers) { user ->
+                val marker = mMap.addMarker(
+                    MarkerOptions().position(
+                        LatLng(
+                            user.location.latitude,
+                            user.location.longitude
+                        )
+                    ).title(user.customerName)
+                )
+                if (marker != null) {
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.position, 15f))
+                }
+            }
+            recyclerView.adapter = adapter
+            Log.d("HawkerViewActivity", "Inflating completed, recyclerView: ${recyclerView.adapter}")
+
+            floatingWindow = PopupWindow(
+                floatingWindowLayout,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                true
+            )
+
+            Log.d("HawkerViewActivity", "Showing window")
+            floatingWindow.showAtLocation(window.decorView.rootView, Gravity.CENTER, 0, 0)
+
         }
+
 
     }
 
@@ -123,4 +193,6 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
     }
+
+
 }
