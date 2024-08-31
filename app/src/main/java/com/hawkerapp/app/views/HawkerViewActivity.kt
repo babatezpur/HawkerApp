@@ -22,7 +22,9 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.hawkerapp.app.adapters.VisitRequestAdapter
 import com.hawkerapp.app.managers.HawkerManager
@@ -99,10 +101,14 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
         RetrofitHelper.fetchUserRequests(activeHawkerId!!) {
             Log.d("HawkerViewActivity", "Users fetched")
             val customers = it
+            val markersMap = mutableMapOf<String, Marker>()
 
             for (user in it) {
                 val userLocation = LatLng(user.location.latitude, user.location.longitude)
-                mMap.addMarker(MarkerOptions().position(userLocation).title(user.customerName))
+                val marker = mMap.addMarker(MarkerOptions().position(userLocation).title(user.customerName))
+                if (marker != null){
+                    markersMap[user.customerName] = marker
+                }
             }
 
 
@@ -117,17 +123,13 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
             val adapter = VisitRequestAdapter(customers) { user ->
-                val marker = mMap.addMarker(
-                    MarkerOptions().position(
-                        LatLng(
-                            user.location.latitude,
-                            user.location.longitude
-                        )
-                    ).title(user.customerName)
-                )
+                val marker = markersMap[user.customerName]
                 if (marker != null) {
                     mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.position, 15f))
+                    marker.showInfoWindow()  // Show info window to highlight
+                    marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)) // Custom method to highlight marker
                 }
+                floatingWindow.dismiss()
             }
             recyclerView.adapter = adapter
             Log.d("HawkerViewActivity", "Inflating completed, recyclerView: ${recyclerView.adapter}")

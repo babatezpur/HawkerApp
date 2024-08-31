@@ -3,18 +3,24 @@ package com.hawkerapp.app.views
 import com.hawkerapp.app.models.HawkerInfo
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.location.Location
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.text.InputType
 import android.util.Log
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.EditText
 import android.widget.ListView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.res.ResourcesCompat
 import com.hawkerapp.app.R
@@ -38,6 +44,7 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var mMap: GoogleMap
+    private lateinit var btnSearchItem: Button
     private var callButton: Button? = null
 
     companion object {
@@ -50,11 +57,69 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
 
         val hawkers = intent.extras?.getParcelableArray("hawkers")
 
+
         val mapFragment = supportFragmentManager.findFragmentById(R.id.maps) as SupportMapFragment
+        btnSearchItem = findViewById(R.id.btnSearchItem)
+
         mapFragment.getMapAsync(this)
+
+        btnSearchItem.setOnClickListener {
+            showSearchDialog()
+        }
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
+    }
+
+    @SuppressLint("ServiceCast")
+    private fun showSearchDialog() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Search Item")
+
+        // Set up the input
+        val input = EditText(this)
+        input.inputType = InputType.TYPE_CLASS_TEXT
+        input.imeOptions = EditorInfo.IME_ACTION_DONE
+        builder.setView(input)
+
+        // Set up the buttons
+        builder.setPositiveButton("Search") { dialog, which ->
+            val searchText = input.text.toString()
+            // TODO: Implement your search functionality here
+            getHawkersWithItem(searchText)
+        }
+        builder.setNegativeButton("Cancel") { dialog, which ->
+            dialog.cancel()
+        }
+
+        val dialog = builder.create()
+
+        // Show keyboard automatically when dialog appears
+        dialog.setOnShowListener {
+            input.requestFocus()
+            input.postDelayed({
+                val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT)
+            }, 200)
+        }
+
+        dialog.show()
+    }
+
+    private fun getHawkersWithItem(item: String) {
+        LocationProvider.init(this)
+        LocationProvider.getLocation(this,
+            { location ->
+                RetrofitHelper.getHawkersWithItem(item, location) {
+                    Toast.makeText(applicationContext, "API CALL MADE", Toast.LENGTH_SHORT).show()
+                }
+            },
+            {
+                error ->
+                    Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
+
+            }
+        )
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
