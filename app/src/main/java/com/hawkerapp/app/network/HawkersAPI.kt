@@ -22,6 +22,8 @@ interface HawkersAPI {
     @GET("hawkers")
     fun fetchHawkersAsync(
         @Header("Authorization") authHeader: String,
+        @Query("longitude") longitude: Double,
+        @Query("latitude") latitude: Double
     ): Call<List<HawkerInfo>>
 
     @GET("hawkers/{id}/visit-requests")
@@ -59,7 +61,7 @@ interface HawkersAPI {
         "Cookie: JSESSIONID=7BF55B5F644787F928FEA318B4244E06"
     )
     fun getHawkersWithItemAsync(
-        @Query("item") item: String,
+        @Query("search") item: String,
         @Query("longitude") longitude: Double,
         @Query("latitude") latitude: Double
     ): Call<List<HawkerInfo>>

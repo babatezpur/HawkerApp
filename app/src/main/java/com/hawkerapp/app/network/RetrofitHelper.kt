@@ -88,19 +88,19 @@ object RetrofitHelper {
         })
     }
 
-    fun fetchHawkersData( onSuccess: (List<HawkerInfo>) -> Unit) {
+    fun fetchHawkersData( long : Double, lat: Double, onSuccess: (List<HawkerInfo>) -> Unit) {
 
         val basicAuth = Credentials.basic("devraj", "jarved")
 
         val hawkersFetchApi = getInstance().create(HawkersAPI::class.java)
-        val call = hawkersFetchApi.fetchHawkersAsync(basicAuth)
+        val call = hawkersFetchApi.fetchHawkersAsync(basicAuth, long, lat)
         call.enqueue(object : Callback<List<HawkerInfo>> {
             override fun onResponse(call: Call<List<HawkerInfo>>, response: Response<List<HawkerInfo>>) {
-                Log.d("RetrofitHelper", "Response: ${response.body()}")
+                Log.d("RetrofitHelper", " fetchHawkersData Response: ${response.body()}")
                 if(response.isSuccessful) {
                     onSuccess(response.body()!!)
                 } else {
-                    Log.d("RetrofitHelper", "Error: ${response.errorBody()}")
+                    Log.d("RetrofitHelper", "Error: ${response.errorBody()} ${response.code()} ${response.message()}")
                 }
             }
 

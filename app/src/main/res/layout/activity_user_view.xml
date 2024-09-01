@@ -35,16 +35,16 @@
             android:layout_height="wrap_content"
             android:text="Search Item"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/button2"
+            app:layout_constraintEnd_toStartOf="@+id/btnFetchAllHawkers"
             app:layout_constraintHorizontal_chainStyle="spread"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <Button
-            android:id="@+id/button2"
+            android:id="@+id/btnFetchAllHawkers"
             android:layout_width="160dp"
             android:layout_height="wrap_content"
-            android:text="Button 2"
+            android:text="Get all Hawkers"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/btnSearchItem"

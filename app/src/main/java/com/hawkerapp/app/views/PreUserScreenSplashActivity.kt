@@ -32,7 +32,7 @@ class PreUserScreenSplashActivity : AppCompatActivity() {
     private fun startFetchingData() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                RetrofitHelper.fetchHawkersData {
+                RetrofitHelper.fetchHawkersData(77.6357,12.913785  ) {
                     Log.d("PreUserScreenSplashActivity", "Hawkers fetched: $it")
                     this.launch {
                         hawkerInfoRepository.insertHawkerInfos(it)
