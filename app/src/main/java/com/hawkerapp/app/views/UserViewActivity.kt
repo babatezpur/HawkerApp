@@ -3,25 +3,19 @@ package com.hawkerapp.app.views
 import com.hawkerapp.app.models.HawkerInfo
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.location.Location
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.text.InputType
 import android.util.Log
-import android.view.inputmethod.EditorInfo
-import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ListView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.res.ResourcesCompat
 import com.hawkerapp.app.R
@@ -47,7 +41,8 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var mMap: GoogleMap
     private lateinit var btnSearchItem: Button
-    private lateinit var btnFetchAllHawkers: Button
+    private lateinit var btnClearSearch: Button
+    private lateinit var searchBar: EditText
     private var callButton: Button? = null
     private var existingMarkers = mutableListOf<Marker>()
 
@@ -64,15 +59,44 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
 
         val mapFragment = supportFragmentManager.findFragmentById(R.id.maps) as SupportMapFragment
         btnSearchItem = findViewById(R.id.btnSearchItem)
-        btnFetchAllHawkers = findViewById(R.id.btnFetchAllHawkers)
+        btnClearSearch = findViewById(R.id.btnClear)
+        searchBar = findViewById(R.id.inputSearch)
 
         mapFragment.getMapAsync(this)
 
         btnSearchItem.setOnClickListener {
-            showSearchDialog()
+            val searchText = searchBar.text.toString()
+
+            if (searchText.isNotEmpty()) {
+                // Call your API with the search text
+                val hawkers = HawkerRelatedApis.getHawkersWithItem(
+                    this,
+                    applicationContext,
+                    searchText
+                ) { hawkersList ->
+                    val builder = LatLngBounds.Builder()
+                    processCoordinates(builder, hawkersList)
+
+                    // Show a toast message with the number of hawkers found
+                    Toast.makeText(
+                        applicationContext,
+                        "Hawkers Found: ${hawkersList.size}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            } else {
+                // If search text is empty, show a warning toast
+                Toast.makeText(
+                    applicationContext,
+                    "Please enter an item to search",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
         }
 
-        btnFetchAllHawkers.setOnClickListener {
+        btnClearSearch.setOnClickListener {
+            searchBar.text.clear()
+            Toast.makeText(this, "Fetching all hawkers", Toast.LENGTH_SHORT).show()
             val builder = LatLngBounds.Builder()
             processCoordinates(builder, null)
         }
@@ -82,6 +106,8 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
 
     }
 
+    /*
+    UNDERSTAND THE FOLLWING CODE BEFORE DELETING.
     @SuppressLint("ServiceCast")
     private fun showSearchDialog() {
         val builder = AlertDialog.Builder(this)
@@ -120,6 +146,7 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
         dialog.show()
     }
 
+     */
 
 
     override fun onMapReady(googleMap: GoogleMap) {

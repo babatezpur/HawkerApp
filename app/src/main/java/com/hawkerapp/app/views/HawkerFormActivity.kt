@@ -66,7 +66,7 @@ class HawkerFormActivity : AppCompatActivity() {
                 if (fragmentA != null && !fragmentA.areAllDataFilled()) {
                     Toast.makeText(
                         this,
-                        "Please fill all the fields in Fragment A",
+                        "Please fill all the fields.",
                         Toast.LENGTH_SHORT
                     ).show()
                     return
