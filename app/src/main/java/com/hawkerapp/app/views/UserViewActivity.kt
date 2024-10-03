@@ -10,6 +10,9 @@ import android.location.Location
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
+import android.view.MotionEvent
+import android.view.inputmethod.EditorInfo
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
@@ -42,7 +45,7 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
     private lateinit var mMap: GoogleMap
     private lateinit var btnSearchItem: Button
     private lateinit var btnClearSearch: Button
-    private lateinit var searchBar: EditText
+    private lateinit var searchInput: EditText
     private var callButton: Button? = null
     private var existingMarkers = mutableListOf<Marker>()
 
@@ -50,6 +53,7 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_user_view)
@@ -58,47 +62,61 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
 
 
         val mapFragment = supportFragmentManager.findFragmentById(R.id.maps) as SupportMapFragment
-        btnSearchItem = findViewById(R.id.btnSearchItem)
-        btnClearSearch = findViewById(R.id.btnClear)
-        searchBar = findViewById(R.id.inputSearch)
+        searchInput = findViewById(R.id.inputSearch)
 
         mapFragment.getMapAsync(this)
 
-        btnSearchItem.setOnClickListener {
-            val searchText = searchBar.text.toString()
+        searchInput.setOnEditorActionListener { v, actionId, event ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH ||
+                event?.keyCode == KeyEvent.KEYCODE_ENTER) {
 
-            if (searchText.isNotEmpty()) {
-                // Call your API with the search text
-                val hawkers = HawkerRelatedApis.getHawkersWithItem(
-                    this,
-                    applicationContext,
-                    searchText
-                ) { hawkersList ->
-                    val builder = LatLngBounds.Builder()
-                    processCoordinates(builder, hawkersList)
+                val searchText = searchInput.text.toString()
 
-                    // Show a toast message with the number of hawkers found
+                if (searchText.isNotEmpty()) {
+                    // Call your API with the search text
+                    val hawkers = HawkerRelatedApis.getHawkersWithItem(
+                        this,
+                        applicationContext,
+                        searchText
+                    ) { hawkersList ->
+                        val builder = LatLngBounds.Builder()
+                        processCoordinates(builder, hawkersList)
+
+                        // Show a toast message with the number of hawkers found
+                        Toast.makeText(
+                            applicationContext,
+                            "Hawkers Found: ${hawkersList.size}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                } else {
+                    // If search text is empty, show a warning toast
                     Toast.makeText(
                         applicationContext,
-                        "Hawkers Found: ${hawkersList.size}",
+                        "Please enter an item to search",
                         Toast.LENGTH_SHORT
                     ).show()
                 }
+                true // Return true to indicate that the action has been handled
             } else {
-                // If search text is empty, show a warning toast
-                Toast.makeText(
-                    applicationContext,
-                    "Please enter an item to search",
-                    Toast.LENGTH_SHORT
-                ).show()
+                false
             }
         }
 
-        btnClearSearch.setOnClickListener {
-            searchBar.text.clear()
-            Toast.makeText(this, "Fetching all hawkers", Toast.LENGTH_SHORT).show()
-            val builder = LatLngBounds.Builder()
-            processCoordinates(builder, null)
+// Handle 'Clear' functionality when the cross icon is clicked
+        searchInput.setOnTouchListener { v, event ->
+            val drawableEnd = 2
+            if (event.action == MotionEvent.ACTION_UP) {
+                if (event.rawX >= (searchInput.right - searchInput.compoundDrawables[drawableEnd].bounds.width())) {
+                    searchInput.text.clear()
+                    Toast.makeText(this, "Fetching all hawkers", Toast.LENGTH_SHORT).show()
+                    val builder = LatLngBounds.Builder()
+                    processCoordinates(builder, null)
+                    v.performClick()
+                    return@setOnTouchListener true
+                }
+            }
+            false
         }
 
 

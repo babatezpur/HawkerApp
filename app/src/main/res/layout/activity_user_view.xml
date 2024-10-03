@@ -16,7 +16,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- Cylindrical input box -->
+        <!-- Cylindrical input box with cross icon for clear functionality -->
         <androidx.appcompat.widget.AppCompatEditText
             android:id="@+id/inputSearch"
             android:layout_width="0dp"
@@ -27,44 +27,11 @@
             android:layout_marginEnd="40dp"
             android:drawablePadding="12dp"
             android:singleLine="true"
+            android:drawableEnd="@drawable/ic_clear"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-
-        <!-- Lens icon beside the input box -->
-        <ImageView
-            android:id="@+id/iconSearch"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginStart="8dp"
-            android:src="@drawable/lens"
-            android:contentDescription="Search"
-            app:layout_constraintStart_toEndOf="@id/inputSearch"
-            app:layout_constraintTop_toTopOf="@id/inputSearch"
-            app:layout_constraintBottom_toBottomOf="@id/inputSearch" />
-
-        <!-- Buttons: Search Item and Clear -->
-        <Button
-            android:id="@+id/btnSearchItem"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="SEARCH ITEM"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/btnClear"
-            app:layout_constraintTop_toBottomOf="@id/inputSearch"
-            android:layout_marginTop="16dp" />
-
-        <Button
-            android:id="@+id/btnClear"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="CLEAR"
-            app:layout_constraintStart_toEndOf="@id/btnSearchItem"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/inputSearch"
-            android:layout_marginTop="16dp" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- Maps fragment -->
     <androidx.fragment.app.FragmentContainerView

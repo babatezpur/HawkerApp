@@ -22,6 +22,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.hawkerapp.app.R
 import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -39,6 +40,7 @@ class HawkerSelfDetails : Fragment() {
     private val CAMERA_REQUEST_CODE = 2
     private val CAMERA_PERMISSION_REQUEST = 100
     private lateinit var currentPhotoPath: String
+    private lateinit var imageFile: File
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -141,9 +143,21 @@ class HawkerSelfDetails : Fragment() {
             val inputStream = requireContext().contentResolver.openInputStream(imageUri)
             val selectedImage: Bitmap = BitmapFactory.decodeStream(inputStream)
             imageUploader.setImageBitmap(selectedImage)
+            imageFile = bitmapToFile(selectedImage)
         } else if (requestCode == CAMERA_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
             val capturedImage: Bitmap = BitmapFactory.decodeFile(currentPhotoPath)
             imageUploader.setImageBitmap(capturedImage)
+            imageFile = bitmapToFile(capturedImage)
         }
+
+    }
+
+    private fun bitmapToFile(bitmap: Bitmap): File {
+        val file = File(requireContext().cacheDir, "temp_image.jpg")
+        val out = FileOutputStream(file)
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out) // Compress as JPEG
+        out.flush()
+        out.close()
+        return file
     }
 }
