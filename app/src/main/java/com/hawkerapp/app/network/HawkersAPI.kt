@@ -14,6 +14,7 @@ import retrofit2.http.Header
 import retrofit2.http.Headers
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 
 interface HawkersAPI {
@@ -21,6 +22,8 @@ interface HawkersAPI {
     @GET("hawkers")
     fun fetchHawkersAsync(
         @Header("Authorization") authHeader: String,
+        @Query("longitude") longitude: Double,
+        @Query("latitude") latitude: Double
     ): Call<List<HawkerInfo>>
 
     @GET("hawkers/{id}/visit-requests")
@@ -50,6 +53,18 @@ interface HawkersAPI {
 
     @GET("hawkers/661b893356b89e0c1d7f4bcd/visit-requests")
     fun getVisitRequestsWithAuth(@Header("Authorization") authHeader: String?): Call<UserData>?
+
+    @GET("hawkers")
+    @Headers(
+        "Content-Type: application/json",
+        "Authorization: Basic ZGV2cmFqOmphcnZlZA==",
+        "Cookie: JSESSIONID=7BF55B5F644787F928FEA318B4244E06"
+    )
+    fun getHawkersWithItemAsync(
+        @Query("search") item: String,
+        @Query("longitude") longitude: Double,
+        @Query("latitude") latitude: Double
+    ): Call<List<HawkerInfo>>
 
 
     @POST("hawkers/visit-requests")

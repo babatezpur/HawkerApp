@@ -13,5 +13,7 @@ data class UserRequestData(
     @SerializedName("notes")
     val notes: String,
     @SerializedName("status")
-    val status: String = "PENDING") {
+    val status: String = "PENDING",
+    @SerializedName("distance")
+    val distance: Long){
 }

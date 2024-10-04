@@ -2,6 +2,7 @@ package com.hawkerapp.app.network
 
 import com.hawkerapp.app.models.HawkerInfo
 import android.util.Log
+import com.hawkerapp.app.models.CustomLocation
 import com.hawkerapp.app.models.FCMData
 import com.hawkerapp.app.models.HawkerFormData
 import com.hawkerapp.app.models.UserData
@@ -87,19 +88,19 @@ object RetrofitHelper {
         })
     }
 
-    fun fetchHawkersData( onSuccess: (List<HawkerInfo>) -> Unit) {
+    fun fetchHawkersData( long : Double, lat: Double, onSuccess: (List<HawkerInfo>) -> Unit) {
 
         val basicAuth = Credentials.basic("devraj", "jarved")
 
         val hawkersFetchApi = getInstance().create(HawkersAPI::class.java)
-        val call = hawkersFetchApi.fetchHawkersAsync(basicAuth)
+        val call = hawkersFetchApi.fetchHawkersAsync(basicAuth, long, lat)
         call.enqueue(object : Callback<List<HawkerInfo>> {
             override fun onResponse(call: Call<List<HawkerInfo>>, response: Response<List<HawkerInfo>>) {
-                Log.d("RetrofitHelper", "Response: ${response.body()}")
+                Log.d("RetrofitHelper", " fetchHawkersData Response: ${response.body()}")
                 if(response.isSuccessful) {
                     onSuccess(response.body()!!)
                 } else {
-                    Log.d("RetrofitHelper", "Error: ${response.errorBody()}")
+                    Log.d("RetrofitHelper", "Error: ${response.errorBody()} ${response.code()} ${response.message()}")
                 }
             }
 
@@ -129,7 +130,30 @@ object RetrofitHelper {
                 Log.d("RetrofitHelper", "Error: ${t.message}")
 
             }
+        })
+    }
 
+    fun getHawkersWithItem(item: String, location: CustomLocation, onSuccess: (List<HawkerInfo>) -> Unit) {
+        val hawkersApi = getInstance().create(HawkersAPI::class.java)
+        val call = hawkersApi.getHawkersWithItemAsync(item, location.longitude, location.latitude)
+
+        call.enqueue(object : Callback<List<HawkerInfo>> {
+            override fun onResponse(call: Call<List<HawkerInfo>>, response: Response<List<HawkerInfo>>) {
+                Log.d("RetrofitHelper", "Hawkers with Item Response: ${response.body()}")
+                if (response.isSuccessful) {
+                    response.body()?.let { hawkers ->
+                        onSuccess(hawkers)
+                    } ?: run {
+                        Log.d("RetrofitHelper", "Error: Response body is null")
+                    }
+                } else {
+                    Log.d("RetrofitHelper", "Error: ${response.errorBody()?.string()}")
+                }
+            }
+
+            override fun onFailure(call: Call<List<HawkerInfo>>, t: Throwable) {
+                Log.d("RetrofitHelper", "Error: ${t.message}")
+            }
         })
     }
 }
