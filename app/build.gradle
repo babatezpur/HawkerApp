@@ -7,9 +7,21 @@ plugins {
     id "kotlin-kapt"
 }
 
+// Load the secrets from secrets.properties
+def secretsPropertiesFile = rootProject.file("secrets.properties")
+def secretsProperties = new Properties()
+
+if (secretsPropertiesFile.exists()) {
+    secretsProperties.load(new FileInputStream(secretsPropertiesFile))
+}
+
 android {
     namespace 'com.hawkerapp.app'
     compileSdk 34
+
+    buildFeatures {
+        buildConfig = true
+    }
 
     defaultConfig {
         applicationId "com.hawkerapp.app"
@@ -19,6 +31,12 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // Make the secrets available in BuildConfig
+        buildConfigField "String", "BASE_URL", "\"${secretsProperties['BASE_URL']}\""
+        buildConfigField "String", "API_USERNAME", "\"${secretsProperties['API_USERNAME']}\""
+        buildConfigField "String", "API_PASSWORD", "\"${secretsProperties['API_PASSWORD']}\""
+
     }
 
     buildTypes {

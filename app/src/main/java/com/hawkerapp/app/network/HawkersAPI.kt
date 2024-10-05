@@ -3,8 +3,10 @@ package com.hawkerapp.app.network
 import com.hawkerapp.app.models.FCMData
 import com.hawkerapp.app.models.HawkerFormData
 import com.hawkerapp.app.models.HawkerInfo
+import com.hawkerapp.app.models.ImageUrlData
 import com.hawkerapp.app.models.UserData
 import com.hawkerapp.app.models.UserRequestData
+import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import retrofit2.Call
@@ -12,7 +14,9 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Headers
+import retrofit2.http.Multipart
 import retrofit2.http.POST
+import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -74,5 +78,12 @@ interface HawkersAPI {
         "Cookie: JSESSIONID=7BF55B5F644787F928FEA318B4244E06"
     )
     fun sendUserRequest(@Body requestBody: UserData?): Call<UserData>
+
+    @Multipart
+    @POST("files/s3") // Endpoint for uploading the file
+    fun uploadFile(
+        @Header("Authorization") authHeader: String, // Authorization header
+        @Part file: MultipartBody.Part // The file to upload
+    ): Call<ImageUrlData>
 
 }

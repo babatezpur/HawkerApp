@@ -72,6 +72,7 @@ class HawkerFormActivity : AppCompatActivity() {
                     return
                 }
                 LocationProvider.init(this)
+                Log.d("HawkerFormActivity", "hawkers details: ${fragmentA?.editTextName?.text.toString()} ${fragmentA?.imageFile}")
                 LocationProvider.getLocation(
                     this,
                     { customLocation ->
@@ -84,7 +85,8 @@ class HawkerFormActivity : AppCompatActivity() {
                             fragmentA?.editTextName?.text.toString(),
                             fragmentA?.editTextCategory?.text.toString(),
                             fragmentA?.editTextPhone?.text.toString(),
-                            customLocation
+                            customLocation,
+                            imageurl = fragmentA?.imageFile?.path
                         )
                         Log.d("HawkerFormActivity", "hawkerFromData is : $hawkerFormData")
                         // Call any function that depends on hawkerFormData or pass it to another function
@@ -109,11 +111,6 @@ class HawkerFormActivity : AppCompatActivity() {
                 hawkerFormData = hawkerFormData?.copy(items = itemsList)
 
                 Log.d("HawkerFormActivity", "HawkerFormData: $hawkerFormData")
-
-//                CoroutineScope(Dispatchers.IO).launch {
-//                    hawkerLoginDataRepository.insertHawkerLoginData(hawkerFormData!!)
-//                    Log.d("HawkerFormActivity", "Data inserted successfully")
-//                }
 
                 RetrofitHelper.sendHawkersData(hawkerFormData!!) {
                     Log.d("HawkerFormActivity", "Response: $it")

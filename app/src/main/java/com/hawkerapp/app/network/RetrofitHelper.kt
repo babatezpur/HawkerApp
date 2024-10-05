@@ -2,20 +2,29 @@ package com.hawkerapp.app.network
 
 import com.hawkerapp.app.models.HawkerInfo
 import android.util.Log
+import com.google.gson.Gson
 import com.hawkerapp.app.models.CustomLocation
 import com.hawkerapp.app.models.FCMData
 import com.hawkerapp.app.models.HawkerFormData
+import com.hawkerapp.app.models.ImageUrlData
 import com.hawkerapp.app.models.UserData
 import com.hawkerapp.app.models.UserRequestData
 import okhttp3.Credentials
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.io.File
+import com.hawkerapp.app.BuildConfig as newBuildConfig
 
 object RetrofitHelper {
-    private const val baseUrl = "http://13.233.38.184:5001/"
+    private const val baseUrl = newBuildConfig.BASE_URL
 
     private fun getInstance(): Retrofit {
         return Retrofit.Builder().baseUrl(baseUrl)
@@ -44,10 +53,65 @@ object RetrofitHelper {
         })
     }
 
-    fun sendHawkersData(hawkerData: HawkerFormData, onSuccess: (HawkerInfo) -> Unit) {
-        val basicAuth = Credentials.basic("devraj", "jarved")
+    private fun uploadImageAndGetPublicUrl(imagePath: String, onSuccess: (String) -> Unit, onFailure: (String) -> Unit) {
+        val file = File(imagePath)
+        if (!file.exists()) {
+            onFailure("File does not exist: $imagePath")
+            return
+        }
+
+        // Prepare the file part
+        val requestFile = RequestBody.create("image/jpeg".toMediaTypeOrNull(), file)
+        val filePart = MultipartBody.Part.createFormData("file", file.name, requestFile)
 
         val hawkersFetchApi = getInstance().create(HawkersAPI::class.java)
+        // Call the API
+        val call = hawkersFetchApi.uploadFile("Basic ZGV2cmFqOmphcnZlZA==", filePart)
+        call.enqueue(object : retrofit2.Callback<ImageUrlData> {
+            override fun onResponse(call: Call<ImageUrlData>, response: retrofit2.Response<ImageUrlData>) {
+                if (response.isSuccessful) {
+                    // Extract the public URL from the response
+                    val url = response.body()?.filePath ?: "No URL returned"
+                    onSuccess(url)
+                } else {
+                    onFailure("Request failed with code: ${response.code()}")
+                }
+            }
+
+            override fun onFailure(call: Call<ImageUrlData>, t: Throwable) {
+                onFailure("Error occurred: ${t.message}")
+            }
+        })
+    }
+
+    fun sendHawkersData(hawkerData: HawkerFormData, onSuccess: (HawkerInfo) -> Unit) {
+        // Check if imagePath is not null or empty
+        if (!hawkerData.imageurl.isNullOrEmpty()) {
+            uploadImageAndGetPublicUrl(hawkerData.imageurl!!, { imageUrl ->
+                Log.d("RetrofitHelper", imageUrl)
+                // Set the returned URL to hawkerData.imagePath
+                hawkerData.imageurl = imageUrl
+
+                // Now, call the API to send hawker data
+                executeSendHawkersData(hawkerData, onSuccess)
+            }, { error ->
+                Log.d("Upload", "Image upload failed: $error")
+            })
+        } else {
+            // If there's no imagePath, call sendHawkerData directly
+            executeSendHawkersData(hawkerData, onSuccess)
+        }
+    }
+
+    private fun executeSendHawkersData(hawkerData: HawkerFormData, onSuccess: (HawkerInfo) -> Unit) {
+        val basicAuth = Credentials.basic(newBuildConfig.API_USERNAME, newBuildConfig.API_PASSWORD)
+
+        val hawkersFetchApi = getInstance().create(HawkersAPI::class.java)
+
+        // Convert the HawkerFormData to JSON
+        val hawkerDataJson = Gson().toJson(hawkerData)
+        val hawkerDataRequestBody = hawkerDataJson.toRequestBody("application/json".toMediaTypeOrNull())
+
         val call = hawkersFetchApi.sendHawkerData(basicAuth, hawkerData)
         call.enqueue(object : Callback<HawkerInfo> {
             override fun onResponse(call: Call<HawkerInfo>, response: Response<HawkerInfo>) {
@@ -90,7 +154,7 @@ object RetrofitHelper {
 
     fun fetchHawkersData( long : Double, lat: Double, onSuccess: (List<HawkerInfo>) -> Unit) {
 
-        val basicAuth = Credentials.basic("devraj", "jarved")
+        val basicAuth = Credentials.basic(newBuildConfig.API_USERNAME, newBuildConfig.API_PASSWORD)
 
         val hawkersFetchApi = getInstance().create(HawkersAPI::class.java)
         val call = hawkersFetchApi.fetchHawkersAsync(basicAuth, long, lat)

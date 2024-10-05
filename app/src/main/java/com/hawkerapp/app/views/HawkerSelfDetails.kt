@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.Manifest
 import android.os.Environment
 import android.provider.MediaStore
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -34,18 +35,19 @@ class HawkerSelfDetails : Fragment() {
     var editTextName : EditText? = null
     var editTextCategory : EditText? = null
     var editTextPhone : EditText? = null
+    var imageFile: File? = null
 
     private lateinit var imageUploader: ImageView
     private val PICK_IMAGE_REQUEST = 1
     private val CAMERA_REQUEST_CODE = 2
     private val CAMERA_PERMISSION_REQUEST = 100
     private lateinit var currentPhotoPath: String
-    private lateinit var imageFile: File
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         // Inflate the layout for this fragment
         val view =  inflater.inflate(R.layout.fragment_hawker_self_details, container, false)
         editTextName = view?.findViewById(R.id.name_edit_text)
@@ -125,6 +127,7 @@ class HawkerSelfDetails : Fragment() {
         startActivityForResult(intent, PICK_IMAGE_REQUEST)
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         if (requestCode == CAMERA_PERMISSION_REQUEST) {
             if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
@@ -135,6 +138,7 @@ class HawkerSelfDetails : Fragment() {
         }
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
@@ -152,12 +156,15 @@ class HawkerSelfDetails : Fragment() {
 
     }
 
-    private fun bitmapToFile(bitmap: Bitmap): File {
+    private fun bitmapToFile(bitmap: Bitmap, quality: Int = 50): File {
         val file = File(requireContext().cacheDir, "temp_image.jpg")
         val out = FileOutputStream(file)
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out) // Compress as JPEG
+
+        // Compress the bitmap and write it to the output stream
+        bitmap.compress(Bitmap.CompressFormat.JPEG, quality, out)
         out.flush()
         out.close()
+
         return file
     }
 }

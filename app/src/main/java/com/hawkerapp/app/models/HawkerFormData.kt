@@ -5,10 +5,12 @@ import android.os.Parcelable
 import androidx.annotation.NonNull
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Ignore
 import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import java.io.File
 
 @Serializable
 @Entity(tableName = "hawker_data")
@@ -36,7 +38,13 @@ data class HawkerFormData (
     @SerializedName("items") val items: List<Item>? = null,
 
     @ColumnInfo(name = "is_active")
-    @SerializedName("is_active") val isActive: Boolean = true
+    @SerializedName("is_active") val isActive: Boolean = true,
+
+    // Add this property to hold the image path
+    @ColumnInfo(name = "imageUrl")
+    @SerializedName("imageUrl") var imageurl: String? = null // Image path as a string
+
+
 ) {
 }
 
