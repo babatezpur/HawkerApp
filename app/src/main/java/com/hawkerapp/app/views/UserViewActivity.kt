@@ -16,11 +16,13 @@ import android.view.inputmethod.EditorInfo
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.ListView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.res.ResourcesCompat
+import com.bumptech.glide.Glide
 import com.hawkerapp.app.R
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -212,11 +214,21 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
             // Get references to views in the bottom sheet layout
             val titleTextView = bottomSheetView.findViewById<TextView>(R.id.titleTextView)
             val itemsListView = bottomSheetView.findViewById<ListView>(R.id.itemsListView)
+            val hawkerImageView = bottomSheetView.findViewById<ImageView>(R.id.hawkerImageView)
 
 
             // Set the title and snippet text
             titleTextView.text = it.title
-            titleTextView.setTextColor(Color.WHITE) // Set the text color to white
+            titleTextView.setTextColor(Color.BLUE) // Set the text color to white
+
+            val imageUrl = hawkerInfo?.imageUrl
+            if (!imageUrl.isNullOrEmpty()) {
+                Glide.with(this)
+                    .load(imageUrl)
+                    .placeholder(R.drawable.placeholder_image) // Optional placeholder image
+                    .error(R.drawable.error_image) // Optional error image
+                    .into(hawkerImageView)
+            }
 
             val itemNamesAndPrices = hawkerInfo?.items?.map { "${it.name}: ${it.price}" }
 
