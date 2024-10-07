@@ -3,6 +3,7 @@ package com.hawkerapp.app.views
 import com.hawkerapp.app.models.HawkerInfo
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.DialogInterface
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
@@ -20,6 +21,7 @@ import android.widget.ImageView
 import android.widget.ListView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.res.ResourcesCompat
 import com.bumptech.glide.Glide
@@ -240,13 +242,54 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
             // Show the BottomSheetDialog
             bottomSheetDialog.show()
 
-            callButton = bottomSheetView.findViewById<Button>(R.id.callHawkerButton)
+            callButton = bottomSheetView.findViewById(R.id.callHawkerButton)
             callButton?.setOnClickListener {
-                HawkerRelatedApis.senUserRequestToHawker(this, hawkerInfo)
+                showCallRequestDialog(hawkerInfo)
+                //HawkerRelatedApis.senUserRequestToHawker(this, hawkerInfo)
             }
 
             // Return false to indicate that we have not consumed the event and that we wish for the default behavior to occur
             false
+        }
+    }
+
+    private fun showCallRequestDialog(hawkerInfo: HawkerInfo) {
+        // Inflate the dialog layout
+        val dialogView = layoutInflater.inflate(R.layout.dialog_call_hawker, null)
+
+        // Create the AlertDialog
+        val alertDialog = AlertDialog.Builder(this)
+            .setTitle("Request a Call")
+            .setView(dialogView)
+            .setCancelable(true)
+//            .setNegativeButton("Cancel") { dialog, _ -> dialog.dismiss() }
+            .setPositiveButton("Call", null) // Set the positive button to "Call"
+            .create()
+
+        // Show the dialog
+        alertDialog.show()
+
+        // Get references to the EditTexts
+        val nameEditText = dialogView.findViewById<EditText>(R.id.nameEditText)
+        val noteEditText = dialogView.findViewById<EditText>(R.id.noteEditText)
+
+        // Set button colors
+        //alertDialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.RED)
+        alertDialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.GREEN)
+
+        // Handle the "Call" button click event
+        alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "Call") { dialog, _ ->
+            handleCallRequest(hawkerInfo, nameEditText.text.toString().trim(), noteEditText.text.toString().trim(), dialog)
+        }
+    }
+
+    private fun handleCallRequest(hawkerInfo: HawkerInfo, name: String, note: String, dialog: DialogInterface) {
+        if (name.isEmpty()) {
+            Toast.makeText(this, "Name is mandatory", Toast.LENGTH_SHORT).show()
+        } else {
+            // Call the API or handle the call request
+            HawkerRelatedApis.senUserRequestToHawker(this, hawkerInfo, name, note)
+            dialog.dismiss() // Close the dialog
         }
     }
 
@@ -267,9 +310,6 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
 
     @SuppressLint("UseCompatLoadingForDrawables")
     private fun processCoordinates(builder: LatLngBounds.Builder, hawkersPassed: List<HawkerInfo>?) {
-
-
-
         // Clear existing markers
         for (marker in existingMarkers) {
             marker.remove()
