@@ -6,6 +6,7 @@ import com.google.firebase.messaging.RemoteMessage
 import com.hawkerapp.app.managers.HawkerManager
 import com.hawkerapp.app.models.FCMData
 import com.hawkerapp.app.network.RetrofitHelper
+import com.hawkerapp.app.utils.showNotification
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -19,6 +20,9 @@ class MyFirebaseMessagingService: FirebaseMessagingService() {
         // If the application is in the foreground handle both data and notification messages here.
         // Also if you intend on generating your own notifications as a result of a received FCM
         // message, here is where that should be initiated.
+        val custName = remoteMessage.notification?.title
+        val custMsg = remoteMessage.notification?.body
+        showNotification(custName!!,custMsg!!, this)
     }
 
     override fun onNewToken(token: String) {

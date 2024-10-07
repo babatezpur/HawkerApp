@@ -27,17 +27,17 @@ class HawkerRelatedApis {
         }
 
 
-        fun senUserRequestToHawker(context: Context, hawkerInfo: HawkerInfo) {
+        fun senUserRequestToHawker(context: Context, hawkerInfo: HawkerInfo, name: String, note: String) {
             Toast.makeText(context, "Calling ${hawkerInfo.name}", Toast.LENGTH_SHORT).show()
             LocationProvider.init(context)
             LocationProvider.getLocation(context,
                 { location ->
                     val userData = UserData(
                         hawkerInfo.id,
-                        "Customer 1",
+                        name,
                         "1234567890",
                         location,
-                        "Please come to me urgently",
+                        note,
                     )
                     RetrofitHelper.sendUserRequest(userData) {
                         Toast.makeText(
