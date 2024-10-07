@@ -259,11 +259,10 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
 
         // Create the AlertDialog
         val alertDialog = AlertDialog.Builder(this)
-            .setTitle("Request a Call")
+            .setTitle("CALL HAWKER")
             .setView(dialogView)
             .setCancelable(true)
-//            .setNegativeButton("Cancel") { dialog, _ -> dialog.dismiss() }
-            .setPositiveButton("Call", null) // Set the positive button to "Call"
+            .setPositiveButton("SEND REQUEST", null) // Set the positive button to "Call"
             .create()
 
         // Show the dialog
@@ -274,7 +273,6 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
         val noteEditText = dialogView.findViewById<EditText>(R.id.noteEditText)
 
         // Set button colors
-        //alertDialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.RED)
         alertDialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.GREEN)
 
         // Handle the "Call" button click event
