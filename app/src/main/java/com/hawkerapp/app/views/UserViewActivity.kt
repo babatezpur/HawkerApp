@@ -45,8 +45,6 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var mMap: GoogleMap
-    private lateinit var btnSearchItem: Button
-    private lateinit var btnClearSearch: Button
     private lateinit var searchInput: EditText
     private var callButton: Button? = null
     private var existingMarkers = mutableListOf<Marker>()
@@ -59,8 +57,6 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_user_view)
-
-        val hawkers = intent.extras?.getParcelableArray("hawkers")
 
 
         val mapFragment = supportFragmentManager.findFragmentById(R.id.maps) as SupportMapFragment

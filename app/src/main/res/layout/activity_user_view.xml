@@ -24,7 +24,7 @@
             android:hint="Search..."
             android:background="@drawable/search_box_background"
             android:padding="12dp"
-            android:layout_marginEnd="40dp"
+            android:layout_marginEnd="10dp"
             android:drawablePadding="12dp"
             android:singleLine="true"
             android:drawableEnd="@drawable/ic_clear"
@@ -44,7 +44,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.8"
+        app:layout_constraintHeight_percent="0.89"
         tools:context="com.hawkerapp.app.views.UserViewActivity"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
