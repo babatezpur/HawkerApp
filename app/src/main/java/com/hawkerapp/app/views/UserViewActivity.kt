@@ -3,6 +3,7 @@ package com.hawkerapp.app.views
 import com.hawkerapp.app.models.HawkerInfo
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.DialogInterface
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
@@ -16,11 +17,14 @@ import android.view.inputmethod.EditorInfo
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.ListView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.res.ResourcesCompat
+import com.bumptech.glide.Glide
 import com.hawkerapp.app.R
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -43,8 +47,6 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var mMap: GoogleMap
-    private lateinit var btnSearchItem: Button
-    private lateinit var btnClearSearch: Button
     private lateinit var searchInput: EditText
     private var callButton: Button? = null
     private var existingMarkers = mutableListOf<Marker>()
@@ -57,8 +59,6 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_user_view)
-
-        val hawkers = intent.extras?.getParcelableArray("hawkers")
 
 
         val mapFragment = supportFragmentManager.findFragmentById(R.id.maps) as SupportMapFragment
@@ -212,11 +212,21 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
             // Get references to views in the bottom sheet layout
             val titleTextView = bottomSheetView.findViewById<TextView>(R.id.titleTextView)
             val itemsListView = bottomSheetView.findViewById<ListView>(R.id.itemsListView)
+            val hawkerImageView = bottomSheetView.findViewById<ImageView>(R.id.hawkerImageView)
 
 
             // Set the title and snippet text
             titleTextView.text = it.title
-            titleTextView.setTextColor(Color.WHITE) // Set the text color to white
+            titleTextView.setTextColor(Color.BLUE) // Set the text color to white
+
+            val imageUrl = hawkerInfo?.imageUrl
+            if (!imageUrl.isNullOrEmpty()) {
+                Glide.with(this)
+                    .load(imageUrl)
+                    .placeholder(R.drawable.placeholder_image) // Optional placeholder image
+                    .error(R.drawable.error_image) // Optional error image
+                    .into(hawkerImageView)
+            }
 
             val itemNamesAndPrices = hawkerInfo?.items?.map { "${it.name}: ${it.price}" }
 
@@ -232,13 +242,52 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
             // Show the BottomSheetDialog
             bottomSheetDialog.show()
 
-            callButton = bottomSheetView.findViewById<Button>(R.id.callHawkerButton)
+            callButton = bottomSheetView.findViewById(R.id.callHawkerButton)
             callButton?.setOnClickListener {
-                HawkerRelatedApis.senUserRequestToHawker(this, hawkerInfo)
+                showCallRequestDialog(hawkerInfo)
+                //HawkerRelatedApis.senUserRequestToHawker(this, hawkerInfo)
             }
 
             // Return false to indicate that we have not consumed the event and that we wish for the default behavior to occur
             false
+        }
+    }
+
+    private fun showCallRequestDialog(hawkerInfo: HawkerInfo) {
+        // Inflate the dialog layout
+        val dialogView = layoutInflater.inflate(R.layout.dialog_call_hawker, null)
+
+        // Create the AlertDialog
+        val alertDialog = AlertDialog.Builder(this)
+            .setTitle("CALL HAWKER")
+            .setView(dialogView)
+            .setCancelable(true)
+            .setPositiveButton("SEND REQUEST", null) // Set the positive button to "Call"
+            .create()
+
+        // Show the dialog
+        alertDialog.show()
+
+        // Get references to the EditTexts
+        val nameEditText = dialogView.findViewById<EditText>(R.id.nameEditText)
+        val noteEditText = dialogView.findViewById<EditText>(R.id.noteEditText)
+
+        // Set button colors
+        alertDialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.GREEN)
+
+        // Handle the "Call" button click event
+        alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "Call") { dialog, _ ->
+            handleCallRequest(hawkerInfo, nameEditText.text.toString().trim(), noteEditText.text.toString().trim(), dialog)
+        }
+    }
+
+    private fun handleCallRequest(hawkerInfo: HawkerInfo, name: String, note: String, dialog: DialogInterface) {
+        if (name.isEmpty()) {
+            Toast.makeText(this, "Name is mandatory", Toast.LENGTH_SHORT).show()
+        } else {
+            // Call the API or handle the call request
+            HawkerRelatedApis.senUserRequestToHawker(this, hawkerInfo, name, note)
+            dialog.dismiss() // Close the dialog
         }
     }
 
@@ -259,9 +308,6 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
 
     @SuppressLint("UseCompatLoadingForDrawables")
     private fun processCoordinates(builder: LatLngBounds.Builder, hawkersPassed: List<HawkerInfo>?) {
-
-
-
         // Clear existing markers
         for (marker in existingMarkers) {
             marker.remove()

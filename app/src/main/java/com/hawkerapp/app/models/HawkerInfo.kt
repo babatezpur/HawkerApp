@@ -30,7 +30,9 @@ data class HawkerInfo(
     @ColumnInfo(name = "distance")
     @SerializedName("distance") val distance: Double,
     @ColumnInfo(name = "items")
-    @SerializedName("items") val items: List<Item>
+    @SerializedName("items") val items: List<Item>,
+    @ColumnInfo(name = "imageUrl")
+    @SerializedName("imageUrl") val imageUrl: String
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readString() ?: "",
@@ -42,7 +44,8 @@ data class HawkerInfo(
         parcel.readDouble(),
         mutableListOf<Item>().apply {
             parcel.readTypedList(this, Item)
-        }
+        },
+        parcel.readString().toString()
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -54,6 +57,7 @@ data class HawkerInfo(
         parcel.writeDouble(rating)
         parcel.writeDouble(distance)
         parcel.writeTypedList(items)
+        parcel.writeString(imageUrl)
     }
 
     override fun describeContents(): Int {

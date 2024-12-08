@@ -15,11 +15,20 @@
         android:textColor="@android:color/black"
         android:layout_marginBottom="8dp"/>
 
+    <!-- Hawker Image -->
+    <ImageView
+        android:id="@+id/hawkerImageView"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:scaleType="centerCrop"
+        android:layout_marginBottom="8dp"
+        android:contentDescription="Hawker Image" />
+
     <!-- List of Items -->
     <ListView
         android:id="@+id/itemsListView"
         android:layout_width="match_parent"
-        android:layout_height="610dp"
+        android:layout_height="400dp"
         android:divider="@null"
         android:dividerHeight="0dp" />
 
