@@ -119,7 +119,7 @@ object RetrofitHelper {
                 if(response.isSuccessful) {
                     onSuccess(response.body()!!)
                 } else {
-                    Log.d("RetrofitHelper", "Error: ${response.code()}")
+                    Log.d("RetrofitHelper", "Error: ${response.message()}")
                 }
             }
 
