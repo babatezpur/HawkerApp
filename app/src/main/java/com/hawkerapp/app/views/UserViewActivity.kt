@@ -89,7 +89,6 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
                         runOnUiThread {
                             val hawkerSearchBottomSheet = HawkerSearchBottomSheet(applicationContext)
                             hawkerSearchBottomSheet.show(supportFragmentManager, "HawkerSearchBottomSheet")
-                            Log.d("hawkerMap", "Hawkers in UserViewActivity: $hawkersList")
                             // Update the list after the bottom sheet is created
                             hawkerSearchBottomSheet.updateHawkersList(hawkersList)
 
@@ -249,8 +248,6 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
 
 
     override fun onMapReady(googleMap: GoogleMap) {
-        Toast.makeText(this, "Map is ready", Toast.LENGTH_SHORT).show()
-        Log.d("hawkerMap", "Map is ready")
         mMap = googleMap
         val builder = LatLngBounds.Builder()
         processCoordinates(builder, null)

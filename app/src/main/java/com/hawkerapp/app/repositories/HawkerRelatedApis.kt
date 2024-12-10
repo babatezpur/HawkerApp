@@ -15,7 +15,6 @@ class HawkerRelatedApis {
             LocationProvider.getLocation(context,
                 { location ->
                     RetrofitHelper.getHawkersWithItem(item, location) {
-                        Toast.makeText(appContext, "Searching Hawkers Selling: ${item.capitalize()}", Toast.LENGTH_SHORT).show()
                         onSuccess(it)
                     }
                 },
@@ -28,7 +27,6 @@ class HawkerRelatedApis {
 
 
         fun senUserRequestToHawker(context: Context, hawkerInfo: HawkerInfo, name: String, note: String) {
-            Toast.makeText(context, "Calling ${hawkerInfo.name}", Toast.LENGTH_SHORT).show()
             LocationProvider.init(context)
             LocationProvider.getLocation(context,
                 { location ->
@@ -49,6 +47,11 @@ class HawkerRelatedApis {
 
                 },
                 { error ->
+                    Toast.makeText(
+                        context,
+                        "Request couldn't be sent to ${hawkerInfo.name}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                     Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
                 }
             )
