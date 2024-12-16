@@ -1,5 +1,6 @@
 package com.hawkerapp.app.views
 
+import HawkerSearchBottomSheet
 import com.hawkerapp.app.models.HawkerInfo
 import android.Manifest
 import android.annotation.SuppressLint
@@ -13,10 +14,12 @@ import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
 import android.view.MotionEvent
+import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.ListView
 import android.widget.TextView
@@ -37,6 +40,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.hawkerapp.app.repositories.HawkerRelatedApis
 import com.hawkerapp.app.utils.DataProcessingUtils.Companion.findHawkerById
@@ -48,8 +52,10 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var mMap: GoogleMap
     private lateinit var searchInput: EditText
-    private var callButton: Button? = null
+    // private var callButton: ImageButton? = null
     private var existingMarkers = mutableListOf<Marker>()
+
+    private lateinit var bottomSheetDialog: BottomSheetDialog
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1
@@ -73,31 +79,37 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
                 val searchText = searchInput.text.toString()
 
                 if (searchText.isNotEmpty()) {
-                    // Call your API with the search text
-                    val hawkers = HawkerRelatedApis.getHawkersWithItem(
+                    // First, get the data from the API
+                    HawkerRelatedApis.getHawkersWithItem(
                         this,
                         applicationContext,
                         searchText
                     ) { hawkersList ->
-                        val builder = LatLngBounds.Builder()
-                        processCoordinates(builder, hawkersList)
+                        // Only create and show the bottom sheet after we have the data
+                        runOnUiThread {
+                            val hawkerSearchBottomSheet = HawkerSearchBottomSheet(applicationContext)
+                            hawkerSearchBottomSheet.show(supportFragmentManager, "HawkerSearchBottomSheet")
+                            // Update the list after the bottom sheet is created
+                            hawkerSearchBottomSheet.updateHawkersList(hawkersList)
 
-                        // Show a toast message with the number of hawkers found
-                        Toast.makeText(
-                            applicationContext,
-                            "Hawkers Found: ${hawkersList.size}",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                            val builder = LatLngBounds.Builder()
+                            processCoordinates(builder, hawkersList)
+
+                            Toast.makeText(
+                                applicationContext,
+                                "Hawkers Found: ${hawkersList.size}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
                 } else {
-                    // If search text is empty, show a warning toast
                     Toast.makeText(
                         applicationContext,
                         "Please enter an item to search",
                         Toast.LENGTH_SHORT
                     ).show()
                 }
-                true // Return true to indicate that the action has been handled
+                true
             } else {
                 false
             }
@@ -121,8 +133,76 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
 
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-
     }
+
+    fun centerMapOnHawker(hawkerInfo: HawkerInfo) {
+        // Create LatLng object for the hawker's location
+        val hawkerLatLng = LatLng(hawkerInfo.location.latitude, hawkerInfo.location.longitude)
+
+
+        // Animate camera to center on hawker with zoom
+        mMap.animateCamera(
+            CameraUpdateFactory.newLatLngZoom(
+                hawkerLatLng,
+                12f  // Zoom level - adjust this value as needed (higher = more zoomed in)
+            )
+        )
+
+        // Optional: Highlight the marker
+        existingMarkers.find { marker ->
+                marker.snippet == hawkerInfo.id
+            }?.showInfoWindow()
+    }
+
+    // Is the below code needed? If not, delete it.
+    /*
+    fun showBottomSheetDialog(hawkerInfo: HawkerInfo) {
+        bottomSheetDialog = BottomSheetDialog(this)
+        val bottomSheetView = layoutInflater.inflate(R.layout.bottom_sheet_info, null)
+        bottomSheetDialog.setContentView(bottomSheetView)
+
+        // Get references to views in the bottom sheet layout
+        val titleTextView = bottomSheetView.findViewById<TextView>(R.id.titleTextView)
+        val itemsListView = bottomSheetView.findViewById<ListView>(R.id.itemsListView)
+        val hawkerImageView = bottomSheetView.findViewById<ImageView>(R.id.hawkerImageView)
+
+        // Set the title and snippet text
+        titleTextView.text = hawkerInfo.name
+        titleTextView.setTextColor(Color.BLUE)
+
+        // Load hawker image using Glide
+        val imageUrl = hawkerInfo.imageUrl
+        if (!imageUrl.isNullOrEmpty()) {
+            Glide.with(this)
+                .load(imageUrl)
+                .placeholder(R.drawable.placeholder_image)
+                .error(R.drawable.error_image)
+                .into(hawkerImageView)
+        }
+
+        // Create list of item names and prices
+        val itemNamesAndPrices = hawkerInfo.items.map { "${it.name}: ${it.price}" }
+
+        // Create adapter for the ListView
+        val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, itemNamesAndPrices.toMutableList())
+
+        // Set the adapter for the ListView
+        itemsListView.adapter = adapter
+
+        // Configure bottom sheet dialog appearance
+        bottomSheetDialog.window?.setDimAmount(0.5f)
+        bottomSheetDialog.setCancelable(true)
+
+        // Add call button functionality
+        val callButton = bottomSheetView.findViewById<Button>(R.id.callHawkerButton)
+        callButton.setOnClickListener {
+            showCallRequestDialog(hawkerInfo)
+        }
+
+        // Show the BottomSheetDialog
+        bottomSheetDialog.show()
+    }
+*/
 
     /*
     UNDERSTAND THE FOLLWING CODE BEFORE DELETING.
@@ -168,8 +248,6 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
 
 
     override fun onMapReady(googleMap: GoogleMap) {
-        Toast.makeText(this, "Map is ready", Toast.LENGTH_SHORT).show()
-        Log.d("hawkerMap", "Map is ready")
         mMap = googleMap
         val builder = LatLngBounds.Builder()
         processCoordinates(builder, null)
@@ -200,57 +278,59 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
             }
         }
 
-        mMap.setOnMarkerClickListener {
-            //it.showInfoWindow()
-            //false
-            val hawkerInfo = findHawkerById(intent, it.snippet!!)
-
-            val bottomSheetDialog = BottomSheetDialog(this)
-            val bottomSheetView = layoutInflater.inflate(R.layout.bottom_sheet_info, null)
-            bottomSheetDialog.setContentView(bottomSheetView)
-
-            // Get references to views in the bottom sheet layout
-            val titleTextView = bottomSheetView.findViewById<TextView>(R.id.titleTextView)
-            val itemsListView = bottomSheetView.findViewById<ListView>(R.id.itemsListView)
-            val hawkerImageView = bottomSheetView.findViewById<ImageView>(R.id.hawkerImageView)
-
-
-            // Set the title and snippet text
-            titleTextView.text = it.title
-            titleTextView.setTextColor(Color.BLUE) // Set the text color to white
-
-            val imageUrl = hawkerInfo?.imageUrl
-            if (!imageUrl.isNullOrEmpty()) {
-                Glide.with(this)
-                    .load(imageUrl)
-                    .placeholder(R.drawable.placeholder_image) // Optional placeholder image
-                    .error(R.drawable.error_image) // Optional error image
-                    .into(hawkerImageView)
-            }
-
-            val itemNamesAndPrices = hawkerInfo?.items?.map { "${it.name}: ${it.price}" }
-
-            val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, itemNamesAndPrices!!.toMutableList())
-
-            // Set the adapter for the ListView
-            itemsListView.adapter = adapter
-
-
-            bottomSheetDialog.window?.setDimAmount(0.5f)
-            bottomSheetDialog.setCancelable(true)
-
-            // Show the BottomSheetDialog
-            bottomSheetDialog.show()
-
-            callButton = bottomSheetView.findViewById(R.id.callHawkerButton)
-            callButton?.setOnClickListener {
-                showCallRequestDialog(hawkerInfo)
-                //HawkerRelatedApis.senUserRequestToHawker(this, hawkerInfo)
-            }
-
-            // Return false to indicate that we have not consumed the event and that we wish for the default behavior to occur
+        mMap.setOnMarkerClickListener { marker ->
+            val hawkerInfo = findHawkerById(intent, marker.snippet!!)
+            hawkerInfo?.let { showHawkerDetails(it) }
             false
         }
+    }
+
+    fun showHawkerDetails(hawkerInfo: HawkerInfo) {
+        val bottomSheetDialog = BottomSheetDialog(this)
+        val bottomSheetView = layoutInflater.inflate(R.layout.bottom_sheet_info, null)
+        bottomSheetDialog.setContentView(bottomSheetView)
+
+        // Get references to views in the bottom sheet layout
+        val titleTextView = bottomSheetView.findViewById<TextView>(R.id.titleTextView)
+        val itemsListView = bottomSheetView.findViewById<ListView>(R.id.itemsListView)
+        val hawkerImageView = bottomSheetView.findViewById<ImageView>(R.id.hawkerImageView)
+
+        // Set the title text
+        titleTextView.text = hawkerInfo.name
+        titleTextView.setTextColor(Color.BLUE)
+
+        // Load hawker image
+        val imageUrl = hawkerInfo.imageUrl
+        if (!imageUrl.isNullOrEmpty()) {
+            Glide.with(this)
+                .load(imageUrl)
+                .placeholder(R.drawable.placeholder_image)
+                .error(R.drawable.error_image)
+                .into(hawkerImageView)
+        }
+
+        // Set up items list
+        val itemNamesAndPrices = hawkerInfo.items.map { "${it.name}: ${it.price}" }
+        val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, itemNamesAndPrices.toMutableList())
+        itemsListView.adapter = adapter
+
+        // Configure dialog
+        bottomSheetDialog.window?.setDimAmount(0.5f)
+        bottomSheetDialog.setCancelable(true)
+
+        // Add this code after setContentView
+        bottomSheetDialog.behavior.apply {
+            state = BottomSheetBehavior.STATE_HALF_EXPANDED  // Makes it open fully by default
+            peekHeight = 600  // Set the initial peek height in pixels
+        }
+
+        // Set up call button
+        val callButton = bottomSheetView.findViewById<ImageButton>(R.id.callButton)
+        callButton.setOnClickListener {
+            showCallRequestDialog(hawkerInfo)
+        }
+
+        bottomSheetDialog.show()
     }
 
     private fun showCallRequestDialog(hawkerInfo: HawkerInfo) {
