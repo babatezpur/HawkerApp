@@ -10,6 +10,7 @@ import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.location.Location
 import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.viewModels
 import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
@@ -45,9 +46,12 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.hawkerapp.app.repositories.HawkerRelatedApis
 import com.hawkerapp.app.utils.DataProcessingUtils.Companion.findHawkerById
 import com.hawkerapp.app.utils.DataProcessingUtils.Companion.resize
+import com.hawkerapp.app.viewmodels.UserViewModel
 
 //complete the createcoords9list function
 class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
+
+    private val viewModel: UserViewModel by viewModels()
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var mMap: GoogleMap
@@ -66,75 +70,381 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_user_view)
 
+        setupUI()
+        setupObservers()
+        setupLocationServices()
 
+        viewModel.fetchAllHawkers(this)
+
+    }
+
+
+//        val mapFragment = supportFragmentManager.findFragmentById(R.id.maps) as SupportMapFragment
+//        searchInput = findViewById(R.id.inputSearch)
+//
+//        mapFragment.getMapAsync(this)
+//
+//        searchInput.setOnEditorActionListener { v, actionId, event ->
+//            if (actionId == EditorInfo.IME_ACTION_SEARCH ||
+//                event?.keyCode == KeyEvent.KEYCODE_ENTER) {
+//
+//                val searchText = searchInput.text.toString()
+//
+//                if (searchText.isNotEmpty()) {
+//                    // First, get the data from the API
+//                    HawkerRelatedApis.getHawkersWithItem(
+//                        this,
+//                        applicationContext,
+//                        searchText
+//                    ) { hawkersList ->
+//                        // Only create and show the bottom sheet after we have the data
+//                        runOnUiThread {
+//                            val hawkerSearchBottomSheet = HawkerSearchBottomSheet(applicationContext)
+//                            hawkerSearchBottomSheet.show(supportFragmentManager, "HawkerSearchBottomSheet")
+//                            // Update the list after the bottom sheet is created
+//                            hawkerSearchBottomSheet.updateHawkersList(hawkersList)
+//
+//                            val builder = LatLngBounds.Builder()
+//                            processCoordinates(builder, hawkersList)
+//
+//                            Toast.makeText(
+//                                applicationContext,
+//                                "Hawkers Found: ${hawkersList.size}",
+//                                Toast.LENGTH_SHORT
+//                            ).show()
+//                        }
+//                    }
+//                } else {
+//                    Toast.makeText(
+//                        applicationContext,
+//                        "Please enter an item to search",
+//                        Toast.LENGTH_SHORT
+//                    ).show()
+//                }
+//                true
+//            } else {
+//                false
+//            }
+//        }
+//
+//// Handle 'Clear' functionality when the cross icon is clicked
+//        searchInput.setOnTouchListener { v, event ->
+//            val drawableEnd = 2
+//            if (event.action == MotionEvent.ACTION_UP) {
+//                if (event.rawX >= (searchInput.right - searchInput.compoundDrawables[drawableEnd].bounds.width())) {
+//                    searchInput.text.clear()
+//                    Toast.makeText(this, "Fetching all hawkers", Toast.LENGTH_SHORT).show()
+//                    val builder = LatLngBounds.Builder()
+//                    processCoordinates(builder, null)
+//                    v.performClick()
+//                    return@setOnTouchListener true
+//                }
+//            }
+//            false
+//        }
+//
+//
+//        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+//    }
+
+    private fun setupUI() {
         val mapFragment = supportFragmentManager.findFragmentById(R.id.maps) as SupportMapFragment
         searchInput = findViewById(R.id.inputSearch)
-
         mapFragment.getMapAsync(this)
 
-        searchInput.setOnEditorActionListener { v, actionId, event ->
+        setupSearchInput()
+        setupSearchClear()
+    }
+
+    private fun setupSearchInput() {
+        searchInput.setOnEditorActionListener { _, actionId, event ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH ||
                 event?.keyCode == KeyEvent.KEYCODE_ENTER) {
-
-                val searchText = searchInput.text.toString()
-
-                if (searchText.isNotEmpty()) {
-                    // First, get the data from the API
-                    HawkerRelatedApis.getHawkersWithItem(
-                        this,
-                        applicationContext,
-                        searchText
-                    ) { hawkersList ->
-                        // Only create and show the bottom sheet after we have the data
-                        runOnUiThread {
-                            val hawkerSearchBottomSheet = HawkerSearchBottomSheet(applicationContext)
-                            hawkerSearchBottomSheet.show(supportFragmentManager, "HawkerSearchBottomSheet")
-                            // Update the list after the bottom sheet is created
-                            hawkerSearchBottomSheet.updateHawkersList(hawkersList)
-
-                            val builder = LatLngBounds.Builder()
-                            processCoordinates(builder, hawkersList)
-
-                            Toast.makeText(
-                                applicationContext,
-                                "Hawkers Found: ${hawkersList.size}",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    }
-                } else {
-                    Toast.makeText(
-                        applicationContext,
-                        "Please enter an item to search",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
+                handleSearch()
                 true
             } else {
                 false
             }
         }
+    }
 
-// Handle 'Clear' functionality when the cross icon is clicked
+    private fun handleSearch() {
+        val searchText = searchInput.text.toString()
+        if (searchText.isNotEmpty()) {
+            viewModel.searchHawkers(this, searchText)
+        } else {
+            Toast.makeText(
+                applicationContext,
+                "Please enter an item to search",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private fun setupSearchClear() {
         searchInput.setOnTouchListener { v, event ->
             val drawableEnd = 2
             if (event.action == MotionEvent.ACTION_UP) {
                 if (event.rawX >= (searchInput.right - searchInput.compoundDrawables[drawableEnd].bounds.width())) {
                     searchInput.text.clear()
-                    Toast.makeText(this, "Fetching all hawkers", Toast.LENGTH_SHORT).show()
-                    val builder = LatLngBounds.Builder()
-                    processCoordinates(builder, null)
+                    viewModel.fetchAllHawkers(this) // This will fetch all hawkers without showing bottom sheet
                     v.performClick()
                     return@setOnTouchListener true
                 }
             }
             false
         }
+    }
 
+    private fun setupObservers() {
+        viewModel.hawkers.observe(this) { hawkersList ->
+            // Update map markers regardless of search state
+            val builder = LatLngBounds.Builder()
+            processCoordinates(builder, hawkersList)
 
+            // Only show bottom sheet if it's a search operation
+            if (viewModel.isSearchOperation.value == true && hawkersList.isNotEmpty()) {
+                val hawkerSearchBottomSheet = HawkerSearchBottomSheet(applicationContext)
+                hawkerSearchBottomSheet.show(supportFragmentManager, "HawkerSearchBottomSheet")
+                hawkerSearchBottomSheet.updateHawkersList(hawkersList)
+
+                Toast.makeText(
+                    applicationContext,
+                    "Hawkers Found: ${hawkersList.size}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+
+        viewModel.selectedHawker.observe(this) { hawkerInfo ->
+            hawkerInfo?.let { showHawkerDetails(it) }
+        }
+    }
+
+    private fun setupLocationServices() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
     }
 
+    override fun onMapReady(googleMap: GoogleMap) {
+        mMap = googleMap
+        setupMap()
+        setupMapClickListeners()
+    }
+
+    private fun setupMap() {
+        if (checkLocationPermission()) {
+            mMap.isMyLocationEnabled = true
+            getCurrentLocation()
+        }
+    }
+
+
+    private fun getCurrentLocation() {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return
+        }
+        fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+            location?.let {
+                val currentLatLng = LatLng(it.latitude, it.longitude)
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 14f))
+            } ?: run {
+                Toast.makeText(this, "Location not found", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun setupMapClickListeners() {
+        mMap.setOnMarkerClickListener { marker ->
+            val hawkerInfo = viewModel.findHawkerById(marker.snippet!!)
+            hawkerInfo?.let { viewModel.setSelectedHawker(it) }
+            false
+        }
+    }
+
+     fun showHawkerDetails(hawkerInfo: HawkerInfo) {
+        val bottomSheetDialog = BottomSheetDialog(this)
+        val bottomSheetView = layoutInflater.inflate(R.layout.bottom_sheet_info, null)
+        bottomSheetDialog.setContentView(bottomSheetView)
+
+        setupBottomSheetUI(bottomSheetView, hawkerInfo, bottomSheetDialog)
+    }
+
+    private fun setupBottomSheetUI(view: View, hawkerInfo: HawkerInfo, dialog: BottomSheetDialog) {
+        view.apply {
+            findViewById<TextView>(R.id.titleTextView).apply {
+                text = hawkerInfo.name
+                setTextColor(Color.BLUE)
+            }
+
+            setupHawkerImage(findViewById(R.id.hawkerImageView), hawkerInfo.imageUrl)
+            setupItemsList(findViewById(R.id.itemsListView), hawkerInfo)
+            setupCallButton(findViewById(R.id.callButton), hawkerInfo)
+        }
+
+        dialog.apply {
+            window?.setDimAmount(0.5f)
+            setCancelable(true)
+            behavior.apply {
+                state = BottomSheetBehavior.STATE_HALF_EXPANDED
+                peekHeight = 600
+            }
+            show()
+        }
+    }
+
+    private fun setupHawkerImage(imageView: ImageView, imageUrl: String?) {
+        if (!imageUrl.isNullOrEmpty()) {
+            Glide.with(this)
+                .load(imageUrl)
+                .placeholder(R.drawable.placeholder_image)
+                .error(R.drawable.error_image)
+                .into(imageView)
+        }
+    }
+
+    private fun setupItemsList(listView: ListView, hawkerInfo: HawkerInfo) {
+        val itemNamesAndPrices = hawkerInfo.items.map { "${it.name}: ${it.price}" }
+        val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, itemNamesAndPrices)
+        listView.adapter = adapter
+    }
+
+    private fun setupCallButton(button: ImageButton, hawkerInfo: HawkerInfo) {
+        button.setOnClickListener {
+            showCallRequestDialog(hawkerInfo)
+        }
+    }
+
+    private fun showCallRequestDialog(hawkerInfo: HawkerInfo) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_call_hawker, null)
+        val alertDialog = createCallDialog(dialogView, hawkerInfo)
+
+        alertDialog.show()
+        setupCallDialogButton(alertDialog, dialogView, hawkerInfo)
+    }
+
+    private fun createCallDialog(dialogView: View, hawkerInfo: HawkerInfo): AlertDialog {
+        return AlertDialog.Builder(this)
+            .setTitle("CALL HAWKER")
+            .setView(dialogView)
+            .setCancelable(true)
+            .setPositiveButton("SEND REQUEST", null)
+            .create()
+    }
+
+    private fun setupCallDialogButton(dialog: AlertDialog, dialogView: View, hawkerInfo: HawkerInfo) {
+        val nameEditText = dialogView.findViewById<EditText>(R.id.nameEditText)
+        val noteEditText = dialogView.findViewById<EditText>(R.id.noteEditText)
+
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.GREEN)
+
+        dialog.setButton(AlertDialog.BUTTON_POSITIVE, "Call") { dialogInterface, _ ->
+            handleCallRequest(hawkerInfo, nameEditText.text.toString().trim(),
+                noteEditText.text.toString().trim(), dialogInterface)
+        }
+    }
+
+    private fun handleCallRequest(hawkerInfo: HawkerInfo, name: String, note: String, dialog: DialogInterface) {
+        if (name.isEmpty()) {
+            Toast.makeText(this, "Name is mandatory", Toast.LENGTH_SHORT).show()
+        } else {
+            viewModel.sendCallRequest(this, hawkerInfo, name, note)
+            dialog.dismiss()
+        }
+    }
+
+    @SuppressLint("UseCompatLoadingForDrawables")
+    private fun processCoordinates(builder: LatLngBounds.Builder, hawkers: List<HawkerInfo>?) {
+        viewModel.clearMarkers()
+
+        hawkers?.forEach { hawkerInfo ->
+            val hawkerLatLng = LatLng(hawkerInfo.location.latitude, hawkerInfo.location.longitude)
+            val bitmapDraw = ResourcesCompat.getDrawable(resources, R.drawable.driver_icon, null) as BitmapDrawable
+            val resizedBitmap = bitmapDraw.bitmap.resize(75, 75)
+            val smallMarker = BitmapDescriptorFactory.fromBitmap(resizedBitmap)
+
+            mMap.addMarker(
+                MarkerOptions()
+                    .position(hawkerLatLng)
+                    .title(hawkerInfo.name)
+                    .snippet(hawkerInfo.id)
+                    .icon(smallMarker)
+            )?.let { marker ->
+                viewModel.addMarker(marker)
+            }
+
+            builder.include(hawkerLatLng)
+        }
+
+        if (!hawkers.isNullOrEmpty()) {
+            val bounds = builder.build()
+            val padding = 100
+            mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, padding))
+        }
+    }
+
+    private fun checkLocationPermission(): Boolean {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                LOCATION_PERMISSION_REQUEST_CODE
+            )
+            return false
+        }
+        return true
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                setupMap()
+            } else {
+                Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    fun centerMapOnHawker(hawkerInfo: HawkerInfo) {
+        val hawkerLatLng = LatLng(hawkerInfo.location.latitude, hawkerInfo.location.longitude)
+
+        mMap.animateCamera(
+            CameraUpdateFactory.newLatLngZoom(
+                hawkerLatLng,
+                12f
+            )
+        )
+
+        viewModel.existingMarkers.value?.find { marker ->
+            marker.snippet == hawkerInfo.id
+        }?.showInfoWindow()
+    }
+}
+
+/*
     fun centerMapOnHawker(hawkerInfo: HawkerInfo) {
         // Create LatLng object for the hawker's location
         val hawkerLatLng = LatLng(hawkerInfo.location.latitude, hawkerInfo.location.longitude)
@@ -153,99 +463,6 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
                 marker.snippet == hawkerInfo.id
             }?.showInfoWindow()
     }
-
-    // Is the below code needed? If not, delete it.
-    /*
-    fun showBottomSheetDialog(hawkerInfo: HawkerInfo) {
-        bottomSheetDialog = BottomSheetDialog(this)
-        val bottomSheetView = layoutInflater.inflate(R.layout.bottom_sheet_info, null)
-        bottomSheetDialog.setContentView(bottomSheetView)
-
-        // Get references to views in the bottom sheet layout
-        val titleTextView = bottomSheetView.findViewById<TextView>(R.id.titleTextView)
-        val itemsListView = bottomSheetView.findViewById<ListView>(R.id.itemsListView)
-        val hawkerImageView = bottomSheetView.findViewById<ImageView>(R.id.hawkerImageView)
-
-        // Set the title and snippet text
-        titleTextView.text = hawkerInfo.name
-        titleTextView.setTextColor(Color.BLUE)
-
-        // Load hawker image using Glide
-        val imageUrl = hawkerInfo.imageUrl
-        if (!imageUrl.isNullOrEmpty()) {
-            Glide.with(this)
-                .load(imageUrl)
-                .placeholder(R.drawable.placeholder_image)
-                .error(R.drawable.error_image)
-                .into(hawkerImageView)
-        }
-
-        // Create list of item names and prices
-        val itemNamesAndPrices = hawkerInfo.items.map { "${it.name}: ${it.price}" }
-
-        // Create adapter for the ListView
-        val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, itemNamesAndPrices.toMutableList())
-
-        // Set the adapter for the ListView
-        itemsListView.adapter = adapter
-
-        // Configure bottom sheet dialog appearance
-        bottomSheetDialog.window?.setDimAmount(0.5f)
-        bottomSheetDialog.setCancelable(true)
-
-        // Add call button functionality
-        val callButton = bottomSheetView.findViewById<Button>(R.id.callHawkerButton)
-        callButton.setOnClickListener {
-            showCallRequestDialog(hawkerInfo)
-        }
-
-        // Show the BottomSheetDialog
-        bottomSheetDialog.show()
-    }
-*/
-
-    /*
-    UNDERSTAND THE FOLLWING CODE BEFORE DELETING.
-    @SuppressLint("ServiceCast")
-    private fun showSearchDialog() {
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("Search Item")
-
-        // Set up the input
-        val input = EditText(this)
-        input.inputType = InputType.TYPE_CLASS_TEXT
-        input.imeOptions = EditorInfo.IME_ACTION_DONE
-        builder.setView(input)
-
-        // Set up the buttons
-        builder.setPositiveButton("Search") { dialog, which ->
-            val searchText = input.text.toString()
-            val hawkers  = HawkerRelatedApis.getHawkersWithItem(this, applicationContext, searchText) {
-                val builder = LatLngBounds.Builder()
-                processCoordinates(builder, it)
-                Toast.makeText(applicationContext,"Hawkers Found: ${it.size}", Toast.LENGTH_SHORT).show()
-            }
-        }
-        builder.setNegativeButton("Cancel") { dialog, which ->
-            dialog.cancel()
-        }
-
-        val dialog = builder.create()
-
-        // Show keyboard automatically when dialog appears
-        dialog.setOnShowListener {
-            input.requestFocus()
-            input.postDelayed({
-                val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                imm.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT)
-            }, 200)
-        }
-
-        dialog.show()
-    }
-
-     */
-
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
@@ -426,3 +643,4 @@ class UserViewActivity : AppCompatActivity(), OnMapReadyCallback{
         }
     }
 }
+ */
