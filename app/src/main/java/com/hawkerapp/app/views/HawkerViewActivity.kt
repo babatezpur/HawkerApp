@@ -13,6 +13,7 @@ import android.widget.Button
 import android.widget.PopupWindow
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.hawkerapp.app.R
@@ -30,20 +31,24 @@ import com.hawkerapp.app.adapters.VisitRequestAdapter
 import com.hawkerapp.app.managers.HawkerManager
 import com.hawkerapp.app.models.UserRequestData
 import com.hawkerapp.app.network.RetrofitHelper
+import com.hawkerapp.app.viewmodels.HawkerViewViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+
+// the  utton isnt working. check it.
 class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
 
+    private lateinit var viewModel: HawkerViewViewModel
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var mMap: GoogleMap
     private lateinit var btnFetchRequests:  Button
-    private lateinit var hawkerManager: HawkerManager
     private var activeHawkerId: String? = null
     private lateinit var floatingWindow: PopupWindow
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: VisitRequestAdapter
+    private val markersMap = mutableMapOf<String, Marker>()
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1
@@ -52,45 +57,139 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_hawker_view)
-        hawkerManager = HawkerManager(this)
-        CoroutineScope(Dispatchers.IO).launch {
-            activeHawkerId = hawkerManager.getActiveHawkerId()
-        }
 
-        val mapFragment = supportFragmentManager.findFragmentById(R.id.maps) as SupportMapFragment
-        mapFragment.getMapAsync(this)
+        viewModel = ViewModelProvider(this)[HawkerViewViewModel::class.java]
 
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        btnFetchRequests = findViewById(R.id.btnFetchRequests)
-
+        setupMap()
+        setupViews()
+        observeViewModel()
     }
 
-    override fun onResume() {
-        super.onResume()
+    private fun setupMap() {
+        val mapFragment = supportFragmentManager
+            .findFragmentById(R.id.maps) as SupportMapFragment
+        mapFragment.getMapAsync(this)
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+    }
 
+    private fun setupViews() {
+        btnFetchRequests = findViewById(R.id.btnFetchRequests)
         btnFetchRequests.setOnClickListener {
-            loadCustomers()
+            viewModel.loadCustomers()
+        }
+    }
+
+    private fun observeViewModel() {
+        viewModel.customerRequests.observe(this) { customers ->
+            updateMapMarkers(customers)
+            showCustomersPopup(customers)
+        }
+
+        viewModel.currentLocation.observe(this) { location ->
+            val currentLatLng = LatLng(location.latitude, location.longitude)
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f))
+        }
+    }
+
+    private fun updateMapMarkers(customers: List<UserRequestData>) {
+        markersMap.clear()
+        mMap.clear()
+
+        for (user in customers) {
+            val userLocation = LatLng(user.location.latitude, user.location.longitude)
+            val marker = mMap.addMarker(
+                MarkerOptions()
+                    .position(userLocation)
+                    .title(user.customerName)
+            )
+            if (marker != null) {
+                markersMap[user.customerName] = marker
+            }
+        }
+    }
+
+
+
+    private fun showCustomersPopup(customers: List<UserRequestData>) {
+        val floatingWindowLayout = layoutInflater.inflate(
+            R.layout.visit_requests_floating_window,
+            null
+        )
+        recyclerView = floatingWindowLayout.findViewById(R.id.visitReqsRecyclerView)
+
+        if (recyclerView.layoutManager == null) {
+            recyclerView.layoutManager = LinearLayoutManager(this)
+        }
+
+        adapter = VisitRequestAdapter(customers) { user ->
+            handleCustomerSelection(user)
+        }
+        recyclerView.adapter = adapter
+
+        showPopupWindow(floatingWindowLayout)
+    }
+
+    private fun handleCustomerSelection(user: UserRequestData) {
+        markersMap[user.customerName]?.let { marker ->
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.position, 15f))
+            marker.showInfoWindow()
+            marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
+        }
+        floatingWindow.dismiss()
+    }
+
+    private fun showPopupWindow(layout: View) {
+        floatingWindow = PopupWindow(
+            layout,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            true
+        )
+        floatingWindow.showAtLocation(window.decorView.rootView, Gravity.CENTER, 0, 0)
+    }
+
+    override fun onMapReady(googleMap: GoogleMap) {
+        mMap = googleMap
+        checkLocationPermission()
+    }
+
+    private fun checkLocationPermission() {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                LOCATION_PERMISSION_REQUEST_CODE
+            )
+            return
+        }
+
+        setupLocationTracking()
+    }
+
+    private fun setupLocationTracking() {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED &&
+            ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return  // Return if we don't have permission
+        }
+
+        mMap.isMyLocationEnabled = true
+        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+            location?.let { viewModel.updateCurrentLocation(it) }
         }
     }
 
     private fun loadCustomers() {
-
-//        val floatingWindowLayout = layoutInflater.inflate(R.layout.visit_requests_floating_window, null)
-//
-//        floatingWindow = PopupWindow(
-//            floatingWindowLayout,
-//            ViewGroup.LayoutParams.WRAP_CONTENT,
-//            ViewGroup.LayoutParams.WRAP_CONTENT,
-//            true
-//        )
-//
-//        //floatingWindow.showAtLocation(window.decorView.rootView, Gravity.CENTER, 0, 0)
-//        if (floatingWindow.isShowing) {
-//            Log.d("HawkerViewActivity", "Popup window is showing")
-//        } else {
-//            Log.e("HawkerViewActivity", "Popup window failed to show")
-//        }
-
 
         // Fetch customers from the server
         // Display customers on the map
@@ -149,6 +248,7 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
 
     }
 
+    /*
     override fun onMapReady(googleMap: GoogleMap) {
         Toast.makeText(this, "Map is ready", Toast.LENGTH_SHORT).show()
         Log.d("hawkerMap", "Map is ready")
@@ -180,6 +280,7 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
     }
+    */
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
