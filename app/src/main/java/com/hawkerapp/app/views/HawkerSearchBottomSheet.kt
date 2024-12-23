@@ -13,9 +13,13 @@ import com.hawkerapp.app.R
 import com.hawkerapp.app.adapters.HawkerAdapter
 import com.hawkerapp.app.models.HawkerInfo
 import com.hawkerapp.app.repositories.HawkerRelatedApis
+import com.hawkerapp.app.viewmodels.UserViewModel
 import com.hawkerapp.app.views.UserViewActivity
 
-class HawkerSearchBottomSheet (private var appContext: Context) : BottomSheetDialogFragment() {
+class HawkerSearchBottomSheet (
+    private var appContext: Context,
+    private val viewModel: UserViewModel
+) : BottomSheetDialogFragment() {
     private lateinit var closeButton: ImageButton
     private lateinit var hawkerRecyclerView: RecyclerView
     private lateinit var hawkerAdapter: HawkerAdapter
@@ -51,10 +55,7 @@ class HawkerSearchBottomSheet (private var appContext: Context) : BottomSheetDia
         hawkerAdapter = HawkerAdapter { hawkerInfo ->
             Log.d("BottomSheet","Hawkers in setupView of BottomSheet: ${hawkerInfo.name}")
             // Use the same details display function
-            (activity as UserViewActivity).apply {
-                showHawkerDetails(hawkerInfo)
-                centerMapOnHawker(hawkerInfo)  // New function call
-            }
+            viewModel.setSelectedHawker(hawkerInfo)
             dismiss() // Dismiss the search results sheet
         }
 

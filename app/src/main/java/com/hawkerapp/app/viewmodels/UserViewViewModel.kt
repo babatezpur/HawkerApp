@@ -19,19 +19,12 @@ class UserViewModel(application: Application) : AndroidViewModel(application) {
     private val _selectedHawker = MutableLiveData<HawkerInfo>()
     val selectedHawker: LiveData<HawkerInfo> = _selectedHawker
 
-    private val _existingMarkers = MutableLiveData<MutableList<Marker>>()
-    val existingMarkers: LiveData<MutableList<Marker>> = _existingMarkers
-
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
 
     // Flag to indicate if it's a search operation or clear operation
     private val _isSearchOperation = MutableLiveData<Boolean>()
     val isSearchOperation: LiveData<Boolean> = _isSearchOperation
-
-    init {
-        _existingMarkers.value = mutableListOf()
-    }
 
     fun searchHawkers(context: Context, searchText: String) {
         _isLoading.value = true
@@ -64,19 +57,6 @@ class UserViewModel(application: Application) : AndroidViewModel(application) {
                 _isLoading.postValue(false)
             }
         }
-    }
-
-    fun clearMarkers() {
-        _existingMarkers.value?.forEach { marker ->
-            marker.remove()
-        }
-        _existingMarkers.value?.clear()
-    }
-
-    fun addMarker(marker: Marker) {
-        val currentMarkers = _existingMarkers.value ?: mutableListOf()
-        currentMarkers.add(marker)
-        _existingMarkers.postValue(currentMarkers)
     }
 
     fun setSelectedHawker(hawkerInfo: HawkerInfo) {
