@@ -8,6 +8,7 @@ import androidx.lifecycle.MutableLiveData
 import com.hawkerapp.app.managers.HawkerManager
 import com.hawkerapp.app.models.UserRequestData
 import androidx.lifecycle.viewModelScope
+import com.hawkerapp.app.models.HawkerInfo
 import com.hawkerapp.app.network.RetrofitHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -24,7 +25,6 @@ class HawkerViewViewModel(application: Application) : AndroidViewModel(applicati
 
 
     init {
-        // Correct way - specify IO dispatcher for database operations
         viewModelScope.launch(Dispatchers.IO) {
             activeHawkerId = hawkerManager.getActiveHawkerId()
         }
@@ -42,5 +42,11 @@ class HawkerViewViewModel(application: Application) : AndroidViewModel(applicati
 
     fun updateCurrentLocation(location: Location) {
         _currentLocation.value = location
+    }
+
+    fun logout() {
+        viewModelScope.launch(Dispatchers.IO) {
+            // hawkerManager.logout()
+        }
     }
 }

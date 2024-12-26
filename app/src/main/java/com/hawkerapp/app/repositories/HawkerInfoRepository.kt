@@ -14,5 +14,6 @@ class HawkerInfoRepository (context: Context) {
             hawkerInfoDao.insertHawkerInfo(hawkerInfo)
         }
         //hawkerInfoDao.insertHawkerInfo(hawkerInfo)
+
     }
 }

@@ -1,6 +1,7 @@
 package com.hawkerapp.app.views
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import androidx.appcompat.app.AppCompatActivity
@@ -10,12 +11,20 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.PopupWindow
+import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
+import androidx.core.view.GravityCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.hawkerapp.app.R
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -27,6 +36,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.material.navigation.NavigationView
 import com.hawkerapp.app.adapters.VisitRequestAdapter
 import com.hawkerapp.app.managers.HawkerManager
 import com.hawkerapp.app.models.UserRequestData
@@ -35,6 +45,7 @@ import com.hawkerapp.app.viewmodels.HawkerViewViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 // the  utton isnt working. check it.
@@ -49,6 +60,10 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: VisitRequestAdapter
     private val markersMap = mutableMapOf<String, Marker>()
+    private lateinit var navigationView: NavigationView
+    private lateinit var toolbar: Toolbar
+    private lateinit var drawerLayout: DrawerLayout
+    private lateinit var hawkerManager: HawkerManager
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1
@@ -59,7 +74,10 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
         setContentView(R.layout.activity_hawker_view)
 
         viewModel = ViewModelProvider(this)[HawkerViewViewModel::class.java]
+        hawkerManager = HawkerManager(application)
 
+
+        setupNavigation()
         setupMap()
         setupViews()
         observeViewModel()
@@ -193,8 +211,8 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
 
         // Fetch customers from the server
         // Display customers on the map
-        if(activeHawkerId == null){
-            Log.d("hawkerViewActivity","No active hawker")
+        if (activeHawkerId == null) {
+            Log.d("hawkerViewActivity", "No active hawker")
             return
         }
         RetrofitHelper.fetchUserRequests(activeHawkerId!!) {
@@ -204,20 +222,29 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
 
             for (user in it) {
                 val userLocation = LatLng(user.location.latitude, user.location.longitude)
-                val marker = mMap.addMarker(MarkerOptions().position(userLocation).title(user.customerName))
-                if (marker != null){
+                val marker =
+                    mMap.addMarker(MarkerOptions().position(userLocation).title(user.customerName))
+                if (marker != null) {
                     markersMap[user.customerName] = marker
                 }
             }
 
 
 
-            Log.d("HawkerViewActivity", "Inflating the requests popup with customers: ${customers.size}")
-            val floatingWindowLayout = layoutInflater.inflate(R.layout.visit_requests_floating_window, null)
-            val recyclerView = floatingWindowLayout.findViewById<RecyclerView>(R.id.visitReqsRecyclerView)
+            Log.d(
+                "HawkerViewActivity",
+                "Inflating the requests popup with customers: ${customers.size}"
+            )
+            val floatingWindowLayout =
+                layoutInflater.inflate(R.layout.visit_requests_floating_window, null)
+            val recyclerView =
+                floatingWindowLayout.findViewById<RecyclerView>(R.id.visitReqsRecyclerView)
 
-            Log.d("HawkerViewActivity", "The linearlayoutmanager is : ${recyclerView.layoutManager}")
-            if( recyclerView.layoutManager == null)
+            Log.d(
+                "HawkerViewActivity",
+                "The linearlayoutmanager is : ${recyclerView.layoutManager}"
+            )
+            if (recyclerView.layoutManager == null)
                 recyclerView.layoutManager = LinearLayoutManager(this)
 
 
@@ -231,7 +258,10 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
                 floatingWindow.dismiss()
             }
             recyclerView.adapter = adapter
-            Log.d("HawkerViewActivity", "Inflating completed, recyclerView: ${recyclerView.adapter}")
+            Log.d(
+                "HawkerViewActivity",
+                "Inflating completed, recyclerView: ${recyclerView.adapter}"
+            )
 
             floatingWindow = PopupWindow(
                 floatingWindowLayout,
@@ -248,40 +278,6 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
 
     }
 
-    /*
-    override fun onMapReady(googleMap: GoogleMap) {
-        Toast.makeText(this, "Map is ready", Toast.LENGTH_SHORT).show()
-        Log.d("hawkerMap", "Map is ready")
-        mMap = googleMap
-        if (ActivityCompat.checkSelfPermission(
-                this,
-            Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                LOCATION_PERMISSION_REQUEST_CODE
-            )
-            return
-        }
-        Log.d("hawkerApp", "Location permission granted")
-        mMap.isMyLocationEnabled = true
-        fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
-            if (location != null) {
-                val currentLatLng = LatLng(location.latitude, location.longitude)
-                //mMap.addMarker(MarkerOptions().position(currentLatLng).title("Your Location"))
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f))
-            } else {
-                Toast.makeText(this, "Location not found", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-    */
-
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -294,6 +290,80 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
             } else {
                 Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+    private fun setupNavigation() {
+        toolbar = findViewById(R.id.toolbar)
+        setSupportActionBar(toolbar)
+
+        drawerLayout = findViewById(R.id.drawer_layout)
+        navigationView = findViewById(R.id.nav_view)
+
+        // Setup hamburger icon
+        val toggle = ActionBarDrawerToggle(
+            this,
+            drawerLayout,
+            toolbar,
+            R.string.navigation_drawer_open,
+            R.string.navigation_drawer_close
+        )
+        drawerLayout.addDrawerListener(toggle)
+        toggle.syncState()
+
+        // Setup navigation header
+        val headerView = navigationView.getHeaderView(0)
+        val hawkerImageView = headerView.findViewById<ImageView>(R.id.hawkerImageView)
+        val hawkerNameTextView = headerView.findViewById<TextView>(R.id.hawkerNameTextView)
+        val hawkerCategoryTextView = headerView.findViewById<TextView>(R.id.hawkerCategoryTextView)
+
+        // Load hawker info from hawkerManager
+        lifecycleScope.launch(Dispatchers.IO) {
+            val hawkerId = hawkerManager.getActiveHawkerId()
+            val hawker = hawkerManager.getHawkerInfo(hawkerId)  // Assuming this method exists
+            withContext(Dispatchers.Main) {
+                hawker?.let {
+                    // Load hawker image using Glide
+                    Glide.with(this@HawkerViewActivity)
+                        .load("https://picsum.photos/200/300")
+                        .circleCrop()
+                        .into(hawkerImageView)
+
+                    hawkerNameTextView.text = hawker.name
+                    hawkerCategoryTextView.text = hawker.category
+                }
+            }
+        }
+
+        // Setup navigation item clicks
+        navigationView.setNavigationItemSelectedListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.nav_profile -> {
+                    // startActivity(Intent(this, ProfileActivity::class.java))
+                }
+                R.id.nav_manage_items -> {
+                    // startActivity(Intent(this, ManageItemsActivity::class.java))
+                }
+                R.id.nav_logout -> {
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        viewModel.logout()
+                        withContext(Dispatchers.Main) {
+                            // startActivity(Intent(this@HawkerViewActivity, LoginActivity::class.java))
+                            finish()
+                        }
+                    }
+                }
+            }
+            drawerLayout.closeDrawer(GravityCompat.START)
+            true
+        }
+    }
+
+    override fun onBackPressed() {
+        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START)
+        } else {
+            super.onBackPressed()
         }
     }
 

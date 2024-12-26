@@ -2,6 +2,7 @@ package com.hawkerapp.app.managers
 
 import android.content.Context
 import android.util.Log
+import com.hawkerapp.app.models.CustomLocation
 import com.hawkerapp.app.models.HawkerFormData
 import com.hawkerapp.app.models.HawkerInfo
 import com.hawkerapp.app.repositories.HawkerInfoRepository
@@ -48,5 +49,20 @@ class HawkerManager (private val context: Context) {
         CoroutineScope(Dispatchers.IO).launch {
             hawkerLoginDataRepository.markAllHawkersInactive(exceptDriverId)
         }
+    }
+
+    fun getHawkerInfo(hawkerId: String?): HawkerInfo {
+        return HawkerInfo(
+            "1",
+            "Hawker Name",
+            "Category",
+            CustomLocation(0.0, 0.0),
+            "Phone",
+            4.6,
+            2.5,
+            mutableListOf(),
+            "https://www.google.com"
+        )
+        // return hawkerInfoRepository.getHawkerInfo(hawkerId)
     }
 }
