@@ -348,7 +348,7 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
                     lifecycleScope.launch(Dispatchers.IO) {
                         viewModel.logout()
                         withContext(Dispatchers.Main) {
-                            // startActivity(Intent(this@HawkerViewActivity, LoginActivity::class.java))
+                            startActivity(Intent(this@HawkerViewActivity, PreHawkerScreenActivity::class.java))
                             finish()
                         }
                     }

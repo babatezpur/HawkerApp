@@ -46,7 +46,7 @@ class HawkerViewViewModel(application: Application) : AndroidViewModel(applicati
 
     fun logout() {
         viewModelScope.launch(Dispatchers.IO) {
-            // hawkerManager.logout()
+            hawkerManager.logout()
         }
     }
 }

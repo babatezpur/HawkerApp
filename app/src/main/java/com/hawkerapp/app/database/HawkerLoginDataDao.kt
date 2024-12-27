@@ -25,4 +25,7 @@ interface HawkerLoginDataDao {
 
     @Query("UPDATE hawker_data SET items = :items WHERE id = :hawkerId")
     suspend fun updateHawkerItem(hawkerId: String, items: List<Item>)
+
+    @Query("UPDATE hawker_data SET is_active = 0 WHERE id = :id")
+    suspend fun logout(id: String?)
 }

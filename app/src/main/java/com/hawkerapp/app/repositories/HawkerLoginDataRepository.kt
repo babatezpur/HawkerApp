@@ -28,4 +28,8 @@ class HawkerLoginDataRepository(context: Context) {
     suspend fun updateHawkerItem(hawkerId: String, items: List<Item>) {
         hawkerLoginDataDao.updateHawkerItem(hawkerId, items)
     }
+
+    suspend fun logout(hawkerId : String?) {
+        hawkerLoginDataDao.logout(hawkerId)
+    }
 }

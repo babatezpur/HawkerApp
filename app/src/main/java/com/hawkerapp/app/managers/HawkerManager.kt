@@ -65,6 +65,11 @@ class HawkerManager (private val context: Context) {
         }
     }
 
+    suspend fun logout() {
+        val hawkerId = hawkerLoginDataRepository.getActiveHawkerId()
+        hawkerLoginDataRepository.logout(hawkerId)
+    }
+
     suspend fun deleteItem(item: Item) {
 
     }
