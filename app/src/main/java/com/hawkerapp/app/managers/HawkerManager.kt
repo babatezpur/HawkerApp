@@ -2,14 +2,15 @@ package com.hawkerapp.app.managers
 
 import android.content.Context
 import android.util.Log
-import com.hawkerapp.app.models.CustomLocation
 import com.hawkerapp.app.models.HawkerFormData
 import com.hawkerapp.app.models.HawkerInfo
+import com.hawkerapp.app.models.Item
 import com.hawkerapp.app.repositories.HawkerInfoRepository
 import com.hawkerapp.app.repositories.HawkerLoginDataRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class HawkerManager (private val context: Context) {
 
@@ -51,18 +52,20 @@ class HawkerManager (private val context: Context) {
         }
     }
 
-    fun getHawkerInfo(hawkerId: String?): HawkerInfo {
-        return HawkerInfo(
-            "1",
-            "Hawker Name",
-            "Category",
-            CustomLocation(0.0, 0.0),
-            "Phone",
-            4.6,
-            2.5,
-            mutableListOf(),
-            "https://www.google.com"
-        )
-        // return hawkerInfoRepository.getHawkerInfo(hawkerId)
+    suspend fun getHawkerInfo(hawkerId: String?): HawkerFormData {
+        return hawkerLoginDataRepository.getHawkerInfo(hawkerId)
+    }
+
+    suspend fun updateItem(items: List<Item>) {
+        withContext(Dispatchers.IO) {
+            val hawkerId = hawkerLoginDataRepository.getActiveHawkerId()
+            if (hawkerId != null) {
+                hawkerLoginDataRepository.updateHawkerItem(hawkerId, items)
+            }
+        }
+    }
+
+    suspend fun deleteItem(item: Item) {
+
     }
 }

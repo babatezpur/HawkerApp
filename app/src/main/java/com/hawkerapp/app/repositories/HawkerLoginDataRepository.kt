@@ -4,6 +4,7 @@ import android.content.Context
 import com.hawkerapp.app.database.HawkerDatabase
 import com.hawkerapp.app.database.HawkerLoginDataDao
 import com.hawkerapp.app.models.HawkerFormData
+import com.hawkerapp.app.models.Item
 
 class HawkerLoginDataRepository(context: Context) {
     private val hawkerLoginDataDao: HawkerLoginDataDao = HawkerDatabase.getInstance(context).hawkerLoginDataDao()
@@ -18,5 +19,13 @@ class HawkerLoginDataRepository(context: Context) {
 
     suspend fun markAllHawkersInactive(exceptDriverId: String) {
         hawkerLoginDataDao.markAllHawkersInactive(exceptDriverId)
+    }
+
+    suspend fun getHawkerInfo(hawkerId: String?): HawkerFormData {
+        return hawkerLoginDataDao.getHawkerInfo(hawkerId)
+    }
+
+    suspend fun updateHawkerItem(hawkerId: String, items: List<Item>) {
+        hawkerLoginDataDao.updateHawkerItem(hawkerId, items)
     }
 }

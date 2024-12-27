@@ -9,7 +9,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
@@ -26,22 +26,25 @@
         android:theme="@style/Theme.HawkerApp"
         tools:targetApi="34">
         <activity
-            android:name="com.hawkerapp.app.views.PreHawkerScreenActivity"
+            android:name=".views.ManageItemsActivity"
             android:exported="false" />
         <activity
-            android:name="com.hawkerapp.app.views.HawkerFormActivity"
+            android:name=".views.PreHawkerScreenActivity"
             android:exported="false" />
         <activity
-            android:name="com.hawkerapp.app.views.PreUserScreenSplashActivity"
+            android:name=".views.HawkerFormActivity"
             android:exported="false" />
         <activity
-            android:name="com.hawkerapp.app.views.UserViewActivity"
+            android:name=".views.PreUserScreenSplashActivity"
             android:exported="false" />
         <activity
-            android:name="com.hawkerapp.app.views.HawkerViewActivity"
+            android:name=".views.UserViewActivity"
             android:exported="false" />
         <activity
-            android:name="com.hawkerapp.app.MainActivity"
+            android:name=".views.HawkerViewActivity"
+            android:exported="false" />
+        <activity
+            android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -49,7 +52,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name=".MyFirebaseMessagingService"
+
+        <service
+            android:name=".MyFirebaseMessagingService"
             android:exported="true">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />

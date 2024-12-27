@@ -54,8 +54,12 @@ data class HawkerInfo(
         parcel.writeString(category)
         parcel.writeParcelable(location, flags)
         parcel.writeString(phone)
-        parcel.writeDouble(rating)
-        parcel.writeDouble(distance)
+        if (rating != null) {
+            parcel.writeDouble(rating)
+        }
+        if (distance != null) {
+            parcel.writeDouble(distance)
+        }
         parcel.writeTypedList(items)
         parcel.writeString(imageUrl)
     }

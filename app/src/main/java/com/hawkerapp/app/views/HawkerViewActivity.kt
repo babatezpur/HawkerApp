@@ -342,7 +342,7 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
                     // startActivity(Intent(this, ProfileActivity::class.java))
                 }
                 R.id.nav_manage_items -> {
-                    // startActivity(Intent(this, ManageItemsActivity::class.java))
+                    startActivity(Intent(this, ManageItemsActivity::class.java))
                 }
                 R.id.nav_logout -> {
                     lifecycleScope.launch(Dispatchers.IO) {
