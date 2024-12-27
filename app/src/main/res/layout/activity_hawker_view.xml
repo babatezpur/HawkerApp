@@ -42,18 +42,9 @@
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/hawkerViewBottomFragment"
             android:layout_width="match_parent"
-            android:layout_height="100dp"
-            app:layout_constraintBottom_toBottomOf="parent" />
-
-        <Button
-            android:id="@+id/btnFetchRequests"
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Fetch Customers"
-            app:layout_constraintBottom_toBottomOf="@id/hawkerViewBottomFragment"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toTopOf="@id/hawkerViewBottomFragment" />
+            android:background="@color/white"
+            app:layout_constraintBottom_toBottomOf="parent" />
 
         <ProgressBar
             android:id="@+id/progressBar_cyclic"

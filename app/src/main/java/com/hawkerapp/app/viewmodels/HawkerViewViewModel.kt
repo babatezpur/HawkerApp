@@ -18,6 +18,9 @@ class HawkerViewViewModel(application: Application) : AndroidViewModel(applicati
     private val _customerRequests = MutableLiveData<List<UserRequestData>>()
     val customerRequests: LiveData<List<UserRequestData>> = _customerRequests
 
+    private val _hasUnreadRequests = MutableLiveData<Boolean>()
+    val hasUnreadRequests: LiveData<Boolean> = _hasUnreadRequests
+
     private var activeHawkerId: String? = null
 
     private val _currentLocation = MutableLiveData<Location>()
@@ -27,7 +30,23 @@ class HawkerViewViewModel(application: Application) : AndroidViewModel(applicati
     init {
         viewModelScope.launch(Dispatchers.IO) {
             activeHawkerId = hawkerManager.getActiveHawkerId()
+            checkForNewRequests()
         }
+    }
+
+    private fun checkForNewRequests() {
+        viewModelScope.launch(Dispatchers.IO) {
+            activeHawkerId?.let { hawkerId ->
+                RetrofitHelper.fetchUserRequests(hawkerId) { customers ->
+                    _customerRequests.postValue(customers)
+                    _hasUnreadRequests.postValue(customers.isNotEmpty())
+                }
+            }
+        }
+    }
+
+    fun markRequestsAsRead() {
+        _hasUnreadRequests.value = false
     }
 
     fun loadCustomers() {

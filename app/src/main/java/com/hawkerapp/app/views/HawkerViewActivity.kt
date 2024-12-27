@@ -8,6 +8,8 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
@@ -64,6 +66,7 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var toolbar: Toolbar
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var hawkerManager: HawkerManager
+    private var notificationMenuItem: MenuItem? = null
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1
@@ -77,10 +80,42 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
         hawkerManager = HawkerManager(application)
 
 
+        setupToolbar()  // Call this before setupNavigation
         setupNavigation()
         setupMap()
-        setupViews()
+        //setupViews()
         observeViewModel()
+    }
+
+    private fun setupToolbar() {
+        toolbar = findViewById(R.id.toolbar)
+        setSupportActionBar(toolbar)
+
+        // Enable the action bar home button (hamburger menu)
+        supportActionBar?.apply {
+            setDisplayHomeAsUpEnabled(true)
+            setHomeButtonEnabled(true)
+        }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        // Inflate the menu resource
+        menuInflater.inflate(R.menu.toolbar_menu, menu)
+        notificationMenuItem = menu.findItem(R.id.action_notifications)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_notifications -> {
+                viewModel.customerRequests.value?.let { customers ->
+                    showCustomersPopup(customers)
+                }
+                viewModel.markRequestsAsRead()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
     private fun setupMap() {
@@ -90,23 +125,44 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
     }
 
-    private fun setupViews() {
-        btnFetchRequests = findViewById(R.id.btnFetchRequests)
-        btnFetchRequests.setOnClickListener {
-            viewModel.loadCustomers()
-        }
-    }
+//    private fun setupViews() {
+//        // Remove btnFetchRequests initialization as we're removing the button
+//        toolbar.inflateMenu(R.menu.toolbar_menu)
+//        notificationMenuItem = toolbar.menu.findItem(R.id.action_notifications)
+//
+//        toolbar.setOnMenuItemClickListener { menuItem ->
+//            when (menuItem.itemId) {
+//                R.id.action_notifications -> {
+//                    viewModel.loadCustomers()
+//                    viewModel.markRequestsAsRead()
+//                    true
+//                }
+//                else -> false
+//            }
+//        }
+//    }
 
     private fun observeViewModel() {
         viewModel.customerRequests.observe(this) { customers ->
             updateMapMarkers(customers)
-            showCustomersPopup(customers)
+            // showCustomersPopup(customers)
+        }
+
+        viewModel.hasUnreadRequests.observe(this) { hasUnread ->
+            updateNotificationDot(hasUnread)
         }
 
         viewModel.currentLocation.observe(this) { location ->
             val currentLatLng = LatLng(location.latitude, location.longitude)
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f))
         }
+    }
+
+    private fun updateNotificationDot(show: Boolean) {
+        notificationMenuItem?.setIcon(
+            if (show) R.drawable.ic_hawker_requests
+            else R.drawable.ic_hawker_requests_no_dot
+        )
     }
 
     private fun updateMapMarkers(customers: List<UserRequestData>) {
