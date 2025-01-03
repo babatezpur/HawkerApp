@@ -15,5 +15,5 @@ data class UserRequestData(
     @SerializedName("status")
     val status: String = "PENDING",
     @SerializedName("distance")
-    val distance: Long){
+    val distance: Double){
 }

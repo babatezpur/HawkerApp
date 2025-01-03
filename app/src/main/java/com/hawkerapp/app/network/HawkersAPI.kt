@@ -30,7 +30,7 @@ interface HawkersAPI {
         @Query("latitude") latitude: Double
     ): Call<List<HawkerInfo>>
 
-    @GET("hawkers/{id}/visit-requests")
+    @GET("hawkers/{id}/visit-requests-2")
     @Headers(
         "Content-Type: application/json",
         "Authorization: Basic ZGV2cmFqOmphcnZlZA==",
