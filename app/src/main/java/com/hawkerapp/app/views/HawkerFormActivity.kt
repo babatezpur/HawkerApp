@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Button
 import android.widget.Toast
 import androidx.fragment.app.FragmentManager
@@ -23,6 +24,7 @@ class HawkerFormActivity : AppCompatActivity() {
     private val fragmentManager: FragmentManager = supportFragmentManager
     lateinit var hawkerLoginDataRepository: HawkerLoginDataRepository
     private val hawkerManager = HawkerManager(this)
+    private lateinit var nextButton: Button
 
     //private lateinit var hawkerFormData: HawkerFormData
 
@@ -31,24 +33,45 @@ class HawkerFormActivity : AppCompatActivity() {
     private var currentFragment: Int = FRAGMENT_A
 
     companion object {
-        private const val FRAGMENT_A = 0
-        private const val FRAGMENT_B = 1
+        private const val FRAGMENT_PHONE = 0
+        private const val FRAGMENT_A = 1
+        private const val FRAGMENT_B = 2
         private var hawkerFormData: HawkerFormData? = null
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_hawker_form)
-        val nextButton = findViewById<Button>(R.id.next_button)
+        nextButton = findViewById<Button>(R.id.next_button)
         nextButton.setOnClickListener {
             onNextButtonClicked()
         }
-        loadFirstFragment()
+        loadPhoneVerificationFragment()
     }
 
-    private fun loadFirstFragment() {
+    private fun loadPhoneVerificationFragment() {
+        currentFragment = FRAGMENT_PHONE
+        nextButton.visibility = View.GONE  // Hide the next button
         fragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, HawkerSelfDetails())
+            .replace(R.id.fragment_container, HawkerPhoneDetails())
+            .commit()
+    }
+
+    // Function to be called after successful OTP verification
+    fun proceedToSelfDetails(verifiedPhone: String) {
+        currentFragment = FRAGMENT_A
+        nextButton.visibility = View.VISIBLE  // Show the next button again
+        loadFirstFragment(verifiedPhone)
+    }
+
+    private fun loadFirstFragment(verifiedPhone: String) {
+        val fragment = HawkerSelfDetails().apply {
+            arguments = Bundle().apply {
+                putString("verified_phone", verifiedPhone)
+            }
+        }
+        fragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, fragment)
             .commit()
     }
 
@@ -60,6 +83,18 @@ class HawkerFormActivity : AppCompatActivity() {
 
     private fun onNextButtonClicked() {
         when (currentFragment) {
+//            FRAGMENT_PHONE -> {
+//                val fragmentPhone =
+//                    supportFragmentManager.findFragmentById(R.id.fragment_container) as? HawkerPhoneDetails
+//                if (fragmentPhone != null && !fragmentPhone.isVerified()) {
+//                    Toast.makeText(
+//                        this,
+//                        "Please complete phone verification first.",
+//                        Toast.LENGTH_SHORT
+//                    ).show()
+//                    return
+//                }
+//            }
             FRAGMENT_A -> {
                 val fragmentA =
                     supportFragmentManager.findFragmentById(R.id.fragment_container) as? HawkerSelfDetails

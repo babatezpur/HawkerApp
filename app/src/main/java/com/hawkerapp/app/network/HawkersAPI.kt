@@ -1,5 +1,6 @@
 package com.hawkerapp.app.network
 
+import com.google.gson.JsonObject
 import com.hawkerapp.app.models.FCMData
 import com.hawkerapp.app.models.HawkerFormData
 import com.hawkerapp.app.models.HawkerInfo
@@ -85,5 +86,13 @@ interface HawkersAPI {
         @Header("Authorization") authHeader: String, // Authorization header
         @Part file: MultipartBody.Part // The file to upload
     ): Call<ImageUrlData>
+
+    @POST("auth/send-otp") // Endpoint for sending OTP
+    @Headers(
+        "Content-Type: application/json",
+        "Authorization: Basic ZGV2cmFqOmphcnZlZA==",
+        "Cookie: JSESSIONID=7BF55B5F644787F928FEA318B4244E06"
+    )
+    fun requestOtp(@Body requestBody: String): Call<String>
 
 }

@@ -54,6 +54,20 @@ class HawkerSelfDetails : Fragment() {
         editTextCategory = view?.findViewById(R.id.category_edit_text)
         editTextPhone = view?.findViewById(R.id.phone_edit_text)
 
+        // Get and set the verified phone number
+        arguments?.getString("verified_phone")?.let { verifiedPhone ->
+            editTextPhone?.apply {
+                setText(verifiedPhone)
+                isEnabled = false  // Make the EditText non-editable
+                // Optional: Add visual indication that it's disabled
+                alpha = 0.7f
+                // Optional: Set background to indicate it's read-only
+                setBackgroundResource(android.R.color.transparent)
+            }
+        }
+
+
+
         imageUploader = view?.findViewById(R.id.imageUploader)!!
 
         // Set click listener for the image view

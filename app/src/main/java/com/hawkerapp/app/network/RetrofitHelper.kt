@@ -3,12 +3,14 @@ package com.hawkerapp.app.network
 import com.hawkerapp.app.models.HawkerInfo
 import android.util.Log
 import com.google.gson.Gson
+import com.google.gson.JsonObject
 import com.hawkerapp.app.models.CustomLocation
 import com.hawkerapp.app.models.FCMData
 import com.hawkerapp.app.models.HawkerFormData
 import com.hawkerapp.app.models.ImageUrlData
 import com.hawkerapp.app.models.UserData
 import com.hawkerapp.app.models.UserRequestData
+import com.hawkerapp.app.views.OtpVerificationResponse
 import okhttp3.Credentials
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -220,4 +222,33 @@ object RetrofitHelper {
             }
         })
     }
+
+    // In RetrofitHelper
+    fun requestOtp(phoneNumber: String, callback: (Boolean) -> Unit) {
+        val hawkersFetchApi = getInstance().create(HawkersAPI::class.java)
+        val call = hawkersFetchApi.requestOtp(phoneNumber)
+        call.enqueue(object : Callback<String> {
+            override fun onResponse(call: Call<String>, response: Response<String>) {
+                Log.d("RetrofitHelper", "Response: ${response.body()}")
+                if(response.isSuccessful) {
+                    callback(true)
+                } else {
+                    Log.d("RetrofitHelper", "Response not successfull, Error: ${response}")
+                    callback(false)
+                }
+            }
+
+            override fun onFailure(call: Call<String>, t: Throwable) {
+                Log.d("RetrofitHelper", "Failure !! Error: ${t.message}")
+
+            }
+        })
+        return callback(true);
+        // Implementation to make API call to request OTP
+    }
+
+    fun verifyOtp(phoneNumber: String, otp: String, callback: (OtpVerificationResponse) -> Unit) {
+        return callback(OtpVerificationResponse.Success);
+    }
+
 }
