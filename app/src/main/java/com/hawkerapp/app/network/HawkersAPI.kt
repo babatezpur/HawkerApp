@@ -7,6 +7,8 @@ import com.hawkerapp.app.models.HawkerInfo
 import com.hawkerapp.app.models.ImageUrlData
 import com.hawkerapp.app.models.UserData
 import com.hawkerapp.app.models.UserRequestData
+import com.hawkerapp.app.views.OtpVerifyRequest
+import kotlinx.serialization.json.Json
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
@@ -93,6 +95,14 @@ interface HawkersAPI {
         "Authorization: Basic ZGV2cmFqOmphcnZlZA==",
         "Cookie: JSESSIONID=7BF55B5F644787F928FEA318B4244E06"
     )
-    fun requestOtp(@Body requestBody: String): Call<String>
+    fun requestOtp(@Body requestBody: String): Call<JsonObject>
+
+    @POST("auth/verify-otp") // Endpoint for verifying OTP
+    @Headers(
+        "Content-Type: application/json",
+        "Authorization: Basic ZGV2cmFqOmphcnZlZA==",
+        "Cookie: JSESSIONID=7BF55B5F644787F928FEA318B4244E06"
+    )
+    fun verifyOtp(@Body otpVerifyRequest: OtpVerifyRequest): Call<JsonObject>
 
 }

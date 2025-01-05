@@ -3,11 +3,14 @@ package com.hawkerapp.app.views
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -23,6 +26,7 @@ class HawkerPhoneDetails : Fragment() {
     private val PERMISSION_REQUEST_CODE = 123
     private var isOtpVerified = false
     private var verifiedPhoneNumber = ""
+    private lateinit var loadingSpinner: ProgressBar
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -33,6 +37,10 @@ class HawkerPhoneDetails : Fragment() {
 
         checkSMSPermissions()
         setupSMSReceiver()
+
+        loadingSpinner = view.findViewById(R.id.loading_spinner)
+        loadingSpinner.visibility = View.GONE
+
 
         // Initialize views
         phoneEditText = view.findViewById(R.id.phone_edit_text)
@@ -111,22 +119,40 @@ class HawkerPhoneDetails : Fragment() {
                 return@setOnClickListener
             }
 
+            loadingSpinner.visibility = View.VISIBLE
+            verifyOtpButton.isEnabled = false  // Disable button while loading
+
+            // Record the start time
+            val startTime = System.currentTimeMillis()
+
+            val otpVerifyRequest = OtpVerifyRequest(phoneNumber, otp)
             // Make API call to verify OTP
-            RetrofitHelper.verifyOtp(phoneNumber, otp) { response ->
-                when (response) {
-                    is OtpVerificationResponse.AlreadyRegistered -> {
-                        Toast.makeText(context, "This number is already registered", Toast.LENGTH_LONG).show()
+            RetrofitHelper.verifyOtp(otpVerifyRequest) { response ->
+
+                // Calculate how long the API call took
+                val elapsedTime = System.currentTimeMillis() - startTime
+                val remainingDelay = 2000 - elapsedTime // 2 seconds in milliseconds
+
+
+                val handler = Handler(Looper.getMainLooper())
+                handler.postDelayed({
+                    activity?.runOnUiThread {
+                        // Hide loading spinner
+                        loadingSpinner.visibility = View.GONE
+                        verifyOtpButton.isEnabled = true
+
+                        if(response) {
+                            Toast.makeText(context, "OTP verified successfully!", Toast.LENGTH_SHORT).show()
+                            isOtpVerified = true
+                            verifiedPhoneNumber = phoneEditText.text.toString()
+                            // Proceed to next fragment
+                            (activity as? HawkerFormActivity)?.proceedToSelfDetails(verifiedPhoneNumber)
+                        } else {
+                            Toast.makeText(context, "Invalid OTP. Please try again.", Toast.LENGTH_SHORT).show()
+                        }
                     }
-                    is OtpVerificationResponse.Success -> {
-                        isOtpVerified = true
-                        verifiedPhoneNumber = phoneEditText.text.toString()
-                        // Notify activity to proceed to next fragment
-                        (activity as? HawkerFormActivity)?.proceedToSelfDetails(verifiedPhoneNumber)
-                    }
-                    is OtpVerificationResponse.Error -> {
-                        Toast.makeText(context, "Invalid OTP. Please try again.", Toast.LENGTH_SHORT).show()
-                    }
-                }
+                }, maxOf(remainingDelay, 0)) // Ensure we don't use negative delay
+
             }
         }
     }
@@ -159,6 +185,10 @@ class HawkerPhoneDetails : Fragment() {
         }
     }
 }
+data class OtpVerifyRequest(
+    val phoneNumber: String,
+    val otp: String
+)
 
 sealed class OtpVerificationResponse {
     data object Success : OtpVerificationResponse()

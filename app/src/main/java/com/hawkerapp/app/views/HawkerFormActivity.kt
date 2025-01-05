@@ -22,7 +22,7 @@ class HawkerFormActivity : AppCompatActivity() {
 
 
     private val fragmentManager: FragmentManager = supportFragmentManager
-    lateinit var hawkerLoginDataRepository: HawkerLoginDataRepository
+    private lateinit var hawkerLoginDataRepository: HawkerLoginDataRepository
     private val hawkerManager = HawkerManager(this)
     private lateinit var nextButton: Button
 
@@ -83,18 +83,6 @@ class HawkerFormActivity : AppCompatActivity() {
 
     private fun onNextButtonClicked() {
         when (currentFragment) {
-//            FRAGMENT_PHONE -> {
-//                val fragmentPhone =
-//                    supportFragmentManager.findFragmentById(R.id.fragment_container) as? HawkerPhoneDetails
-//                if (fragmentPhone != null && !fragmentPhone.isVerified()) {
-//                    Toast.makeText(
-//                        this,
-//                        "Please complete phone verification first.",
-//                        Toast.LENGTH_SHORT
-//                    ).show()
-//                    return
-//                }
-//            }
             FRAGMENT_A -> {
                 val fragmentA =
                     supportFragmentManager.findFragmentById(R.id.fragment_container) as? HawkerSelfDetails
