@@ -5,13 +5,11 @@ import com.hawkerapp.app.models.FCMData
 import com.hawkerapp.app.models.HawkerFormData
 import com.hawkerapp.app.models.HawkerInfo
 import com.hawkerapp.app.models.ImageUrlData
+import com.hawkerapp.app.models.OtpVerificationResponse
+import com.hawkerapp.app.models.OtpVerifyRequest
 import com.hawkerapp.app.models.UserData
 import com.hawkerapp.app.models.UserRequestData
-import com.hawkerapp.app.views.OtpVerifyRequest
-import kotlinx.serialization.json.Json
 import okhttp3.MultipartBody
-import okhttp3.RequestBody
-import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -34,12 +32,8 @@ interface HawkersAPI {
     ): Call<List<HawkerInfo>>
 
     @GET("hawkers/{id}/visit-requests-2")
-    @Headers(
-        "Content-Type: application/json",
-        "Authorization: Basic ZGV2cmFqOmphcnZlZA==",
-        "Cookie: JSESSIONID=7BF55B5F644787F928FEA318B4244E06"
-    )
     fun fetchVisitRequestsAsync(
+        @Header("Authorization") authHeader: String,
         @Path("id") id: String
     ): Call<List<UserRequestData>>
 
@@ -103,6 +97,6 @@ interface HawkersAPI {
         "Authorization: Basic ZGV2cmFqOmphcnZlZA==",
         "Cookie: JSESSIONID=7BF55B5F644787F928FEA318B4244E06"
     )
-    fun verifyOtp(@Body otpVerifyRequest: OtpVerifyRequest): Call<JsonObject>
+    fun verifyOtp(@Body otpVerifyRequest: OtpVerifyRequest): Call<OtpVerificationResponse>
 
 }

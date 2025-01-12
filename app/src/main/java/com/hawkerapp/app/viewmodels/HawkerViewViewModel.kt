@@ -1,6 +1,7 @@
 package com.hawkerapp.app.viewmodels
 
 import android.app.Application
+import android.content.Context
 import android.location.Location
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
@@ -30,14 +31,14 @@ class HawkerViewViewModel(application: Application) : AndroidViewModel(applicati
     init {
         viewModelScope.launch(Dispatchers.IO) {
             activeHawkerId = hawkerManager.getActiveHawkerId()
-            checkForNewRequests()
+            checkForNewRequests(context = application)
         }
     }
 
-    private fun checkForNewRequests() {
+    private fun checkForNewRequests(context: Context) {
         viewModelScope.launch(Dispatchers.IO) {
             activeHawkerId?.let { hawkerId ->
-                RetrofitHelper.fetchUserRequests(hawkerId) { customers ->
+                RetrofitHelper.fetchUserRequests(context, hawkerId) { customers ->
                     _customerRequests.postValue(customers)
                     _hasUnreadRequests.postValue(customers.isNotEmpty())
                 }
@@ -49,23 +50,13 @@ class HawkerViewViewModel(application: Application) : AndroidViewModel(applicati
         _hasUnreadRequests.value = false
     }
 
-    fun loadCustomers() {
-        viewModelScope.launch(Dispatchers.IO) {  // Also use IO dispatcher here
-            activeHawkerId?.let { hawkerId ->
-                RetrofitHelper.fetchUserRequests(hawkerId) { customers ->
-                    _customerRequests.postValue(customers)  // postValue is safe to call from background thread
-                }
-            }
-        }
-    }
-
     fun updateCurrentLocation(location: Location) {
         _currentLocation.value = location
     }
 
-    fun logout() {
+    fun logout(context: Context) {
         viewModelScope.launch(Dispatchers.IO) {
-            hawkerManager.logout()
+            hawkerManager.logout(context)
         }
     }
 }

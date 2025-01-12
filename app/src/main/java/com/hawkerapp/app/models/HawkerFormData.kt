@@ -38,7 +38,7 @@ data class HawkerFormData (
     @SerializedName("items") val items: List<Item>? = null,
 
     @ColumnInfo(name = "is_active")
-    @SerializedName("is_active") val isActive: Boolean = true,
+    @SerializedName("is_active") var isActive: Boolean = true,
 
     // Add this property to hold the image path
     @ColumnInfo(name = "imageUrl")

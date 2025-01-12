@@ -39,6 +39,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.navigation.NavigationView
+import com.hawkerapp.app.MainActivity
 import com.hawkerapp.app.adapters.VisitRequestAdapter
 import com.hawkerapp.app.managers.HawkerManager
 import com.hawkerapp.app.models.UserRequestData
@@ -166,6 +167,9 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun updateMapMarkers(customers: List<UserRequestData>) {
+        if (!::mMap.isInitialized) {
+            return  // Exit if map isn't ready yet
+        }
         markersMap.clear()
         mMap.clear()
 
@@ -271,7 +275,7 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
             Log.d("hawkerViewActivity", "No active hawker")
             return
         }
-        RetrofitHelper.fetchUserRequests(activeHawkerId!!) {
+        RetrofitHelper.fetchUserRequests(this, activeHawkerId!!) {
             Log.d("HawkerViewActivity", "Users fetched")
             val customers = it
             val markersMap = mutableMapOf<String, Marker>()
@@ -402,9 +406,9 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
                 }
                 R.id.nav_logout -> {
                     lifecycleScope.launch(Dispatchers.IO) {
-                        viewModel.logout()
+                        viewModel.logout(this@HawkerViewActivity)
                         withContext(Dispatchers.Main) {
-                            startActivity(Intent(this@HawkerViewActivity, PreHawkerScreenActivity::class.java))
+                            startActivity(Intent(this@HawkerViewActivity, MainActivity::class.java))
                             finish()
                         }
                     }

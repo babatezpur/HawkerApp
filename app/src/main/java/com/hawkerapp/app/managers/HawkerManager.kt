@@ -7,6 +7,7 @@ import com.hawkerapp.app.models.HawkerInfo
 import com.hawkerapp.app.models.Item
 import com.hawkerapp.app.repositories.HawkerInfoRepository
 import com.hawkerapp.app.repositories.HawkerLoginDataRepository
+import com.hawkerapp.app.store.SessionManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -65,9 +66,10 @@ class HawkerManager (private val context: Context) {
         }
     }
 
-    suspend fun logout() {
+    suspend fun logout(context: Context) {
         val hawkerId = hawkerLoginDataRepository.getActiveHawkerId()
         hawkerLoginDataRepository.logout(hawkerId)
+        SessionManager.clearSession(context)
     }
 
     suspend fun deleteItem(item: Item) {

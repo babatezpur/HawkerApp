@@ -1,5 +1,6 @@
 package com.hawkerapp.app.network
 
+import android.content.Context
 import com.hawkerapp.app.models.HawkerInfo
 import android.util.Log
 import com.google.gson.Gson
@@ -8,10 +9,12 @@ import com.hawkerapp.app.models.CustomLocation
 import com.hawkerapp.app.models.FCMData
 import com.hawkerapp.app.models.HawkerFormData
 import com.hawkerapp.app.models.ImageUrlData
+import com.hawkerapp.app.models.OtpResult
+import com.hawkerapp.app.models.OtpVerificationResponse
+import com.hawkerapp.app.models.OtpVerifyRequest
 import com.hawkerapp.app.models.UserData
 import com.hawkerapp.app.models.UserRequestData
-import com.hawkerapp.app.views.OtpVerificationResponse
-import com.hawkerapp.app.views.OtpVerifyRequest
+import com.hawkerapp.app.store.SessionManager
 import okhttp3.Credentials
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -87,7 +90,7 @@ object RetrofitHelper {
         })
     }
 
-    fun sendHawkersData(hawkerData: HawkerFormData, onSuccess: (HawkerInfo) -> Unit) {
+    fun sendHawkersData(context: Context,  hawkerData: HawkerFormData, onSuccess: (HawkerInfo?) -> Unit) {
         // Check if imagePath is not null or empty
         if (!hawkerData.imageurl.isNullOrEmpty()) {
             uploadImageAndGetPublicUrl(hawkerData.imageurl!!, { imageUrl ->
@@ -96,18 +99,23 @@ object RetrofitHelper {
                 hawkerData.imageurl = imageUrl
 
                 // Now, call the API to send hawker data
-                executeSendHawkersData(hawkerData, onSuccess)
+                executeSendHawkersData(context, hawkerData, onSuccess)
             }, { error ->
                 Log.d("Upload", "Image upload failed: $error")
             })
         } else {
             // If there's no imagePath, call sendHawkerData directly
-            executeSendHawkersData(hawkerData, onSuccess)
+            executeSendHawkersData(context,  hawkerData, onSuccess)
         }
     }
 
-    private fun executeSendHawkersData(hawkerData: HawkerFormData, onSuccess: (HawkerInfo) -> Unit) {
+    private fun executeSendHawkersData(context: Context, hawkerData: HawkerFormData, onSuccess: (HawkerInfo?) -> Unit) {
         val basicAuth = Credentials.basic(newBuildConfig.API_USERNAME, newBuildConfig.API_PASSWORD)
+
+        val token = SessionManager.getAuthToken(context) ?: run {
+            onSuccess(null)
+            return
+        }
 
         val hawkersFetchApi = getInstance().create(HawkersAPI::class.java)
 
@@ -115,7 +123,7 @@ object RetrofitHelper {
         val hawkerDataJson = Gson().toJson(hawkerData)
         val hawkerDataRequestBody = hawkerDataJson.toRequestBody("application/json".toMediaTypeOrNull())
 
-        val call = hawkersFetchApi.sendHawkerData(basicAuth, hawkerData)
+        val call = hawkersFetchApi.sendHawkerData("Bearer $token", hawkerData)
         call.enqueue(object : Callback<HawkerInfo> {
             override fun onResponse(call: Call<HawkerInfo>, response: Response<HawkerInfo>) {
                 Log.d("RetrofitHelper", "Response: ${response.body()}")
@@ -179,9 +187,13 @@ object RetrofitHelper {
         })
     }
 
-    fun fetchUserRequests(id: String, onSuccess: (List<UserRequestData>) -> Unit) {
+    fun fetchUserRequests(context : Context, id: String, onSuccess: (List<UserRequestData>) -> Unit) {
         val hawkersFetchApi = getInstance().create(HawkersAPI::class.java)
-        val call = hawkersFetchApi.fetchVisitRequestsAsync(id)
+        val token = SessionManager.getAuthToken(context) ?: run {
+            onSuccess(emptyList())
+            return
+        }
+        val call = hawkersFetchApi.fetchVisitRequestsAsync("Bearer $token",id)
 
         call.enqueue(object : Callback<List<UserRequestData>> {
             override fun onResponse(call: Call<List<UserRequestData>>, response: Response<List<UserRequestData>>) {
@@ -230,7 +242,7 @@ object RetrofitHelper {
         val call = hawkersFetchApi.requestOtp(phoneNumber)
         call.enqueue(object : Callback<JsonObject> {
             override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
-                Log.d("RetrofitHelper", "Response: ${response.body()}")
+                Log.d("RetrofitHelper", "Response from request otp: ${response.body()}")
                 if(response.isSuccessful) {
                     callback(true)
                 } else {
@@ -248,26 +260,25 @@ object RetrofitHelper {
         // Implementation to make API call to request OTP
     }
 
-    fun verifyOtp(otpVerifyRequest: OtpVerifyRequest, callback: (Boolean) -> Unit) {
+    fun verifyOtp(otpVerifyRequest: OtpVerifyRequest, callback: (Response<OtpVerificationResponse>) -> Unit) {
         val hawkersFetchApi = getInstance().create(HawkersAPI::class.java)
         val call = hawkersFetchApi.verifyOtp(otpVerifyRequest)
-        call.enqueue(object : Callback<JsonObject> {
-            override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
-                Log.d("RetrofitHelper", "Response: ${response.body()}")
-                if(response.isSuccessful) {
-                    callback(true)
-                } else {
-                    Log.d("RetrofitHelper", "Response not successfull, Error: ${response}")
-                    callback(false)
-                }
+
+        call.enqueue(object : Callback<OtpVerificationResponse> {
+
+            override fun onResponse(
+                call: Call<OtpVerificationResponse>,
+                response: Response<OtpVerificationResponse>
+            ) {
+                Log.d("RetrofitHelper", "Response from verifyOtp: ${response}")
+                callback(response)
             }
 
-            override fun onFailure(call: Call<JsonObject>, t: Throwable) {
-                Log.d("RetrofitHelper", "Failure !! Error: ${t.message}")
-
+            override fun onFailure(call: Call<OtpVerificationResponse>, t: Throwable) {
+                Log.e("RetrofitHelper", "Failure !! Error: ${t.message}")
+                // You might want to create an error response or handle this differently
             }
         })
-        return callback(true);
     }
 
 }

@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
+import android.widget.Toast
 import com.google.firebase.FirebaseApp
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -15,6 +16,8 @@ import com.hawkerapp.app.managers.HawkerManager
 import com.hawkerapp.app.models.FCMData
 import com.hawkerapp.app.network.RetrofitHelper
 import com.hawkerapp.app.views.HawkerFormActivity
+import com.hawkerapp.app.views.HawkerOtpActivity
+import com.hawkerapp.app.views.HawkerViewActivity
 import com.hawkerapp.app.views.PreHawkerScreenActivity
 import com.hawkerapp.app.views.PreUserScreenSplashActivity
 import kotlinx.coroutines.CoroutineScope
@@ -22,9 +25,20 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
+
+    private var hawkerManager : HawkerManager? = null
+    private var activeHawkerId: String? = null
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        hawkerManager = HawkerManager(this)
+
+        CoroutineScope(Dispatchers.IO).launch {
+            activeHawkerId = hawkerManager?.getActiveHawkerId()
+        }
 
         initializeFirebaseAndSendToken()
 
@@ -33,11 +47,21 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        CoroutineScope(Dispatchers.IO).launch {
+            activeHawkerId = hawkerManager?.getActiveHawkerId()
+        }
         val btnHawker = findViewById<Button>(R.id.buttonHawker)
         val btnUser = findViewById<Button>(R.id.buttonUser)
         btnHawker.setOnClickListener {
-            val intent = Intent(this, PreHawkerScreenActivity::class.java)
-            startActivity(intent)
+            if (activeHawkerId != null) {
+                Toast.makeText(this, "Welcome back activeId: $activeHawkerId", Toast.LENGTH_SHORT).show()
+                startActivity(Intent(this, HawkerViewActivity::class.java))
+            } else {
+                Toast.makeText(this, "No user is logged in. Please sign up/log in", Toast.LENGTH_SHORT).show()
+                val intent = Intent(this, HawkerOtpActivity::class.java)
+                startActivity(intent)
+            }
+
         }
         btnUser.setOnClickListener {
             val intent = Intent(this, PreUserScreenSplashActivity::class.java)

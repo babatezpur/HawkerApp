@@ -32,8 +32,10 @@ class HawkerFormActivity : AppCompatActivity() {
     // Variable to track the current fragment
     private var currentFragment: Int = FRAGMENT_A
 
+    private var verifiedPhone: String? = null
+    private var jwttoken: String? = null
+
     companion object {
-        private const val FRAGMENT_PHONE = 0
         private const val FRAGMENT_A = 1
         private const val FRAGMENT_B = 2
         private var hawkerFormData: HawkerFormData? = null
@@ -42,29 +44,24 @@ class HawkerFormActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_hawker_form)
+
+        verifiedPhone = intent.getStringExtra("VERIFIED_PHONE")
+
+        if (verifiedPhone == null) {
+            Toast.makeText(this, "Error: Phone number not provided", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+
         nextButton = findViewById<Button>(R.id.next_button)
         nextButton.setOnClickListener {
             onNextButtonClicked()
         }
-        loadPhoneVerificationFragment()
+        loadFirstFragment()
     }
 
-    private fun loadPhoneVerificationFragment() {
-        currentFragment = FRAGMENT_PHONE
-        nextButton.visibility = View.GONE  // Hide the next button
-        fragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, HawkerPhoneDetails())
-            .commit()
-    }
 
-    // Function to be called after successful OTP verification
-    fun proceedToSelfDetails(verifiedPhone: String) {
-        currentFragment = FRAGMENT_A
-        nextButton.visibility = View.VISIBLE  // Show the next button again
-        loadFirstFragment(verifiedPhone)
-    }
-
-    private fun loadFirstFragment(verifiedPhone: String) {
+    private fun loadFirstFragment() {
         val fragment = HawkerSelfDetails().apply {
             arguments = Bundle().apply {
                 putString("verified_phone", verifiedPhone)
@@ -135,8 +132,13 @@ class HawkerFormActivity : AppCompatActivity() {
 
                 Log.d("HawkerFormActivity", "HawkerFormData: $hawkerFormData")
 
-                RetrofitHelper.sendHawkersData(hawkerFormData!!) {
+
+                RetrofitHelper.sendHawkersData(this,  hawkerFormData!!) {
                     Log.d("HawkerFormActivity", "Response: $it")
+                    if(it == null){
+                        Toast.makeText(this, "Error sending data", Toast.LENGTH_SHORT).show()
+                        return@sendHawkersData
+                    }
                     Toast.makeText(this, "Data sent successfully", Toast.LENGTH_SHORT).show()
                     hawkerManager.storeHawkerData(it)
                     hawkerManager.markAllHawkersInactive(it.id)
