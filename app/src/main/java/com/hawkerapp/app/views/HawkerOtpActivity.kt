@@ -158,7 +158,7 @@ class HawkerOtpActivity : AppCompatActivity() {
                                 // New user case - go to registration
                                 val intent = Intent(this, HawkerFormActivity::class.java).apply {
                                     putExtra("VERIFIED_PHONE", phoneNumber)
-//                                    putExtra("jwtToken", response.body()?.token)
+                                    putExtra("HAWKER_ID", response.body()?.hawkerData?.id)
                                 }
                                 startActivity(intent)
                                 finish()

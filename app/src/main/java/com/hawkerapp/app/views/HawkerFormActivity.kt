@@ -33,7 +33,7 @@ class HawkerFormActivity : AppCompatActivity() {
     private var currentFragment: Int = FRAGMENT_A
 
     private var verifiedPhone: String? = null
-    private var jwttoken: String? = null
+    private var hawkerId: String? = null
 
     companion object {
         private const val FRAGMENT_A = 1
@@ -46,6 +46,7 @@ class HawkerFormActivity : AppCompatActivity() {
         setContentView(R.layout.activity_hawker_form)
 
         verifiedPhone = intent.getStringExtra("VERIFIED_PHONE")
+        hawkerId = intent.getStringExtra("HAWKER_ID")
 
         if (verifiedPhone == null) {
             Toast.makeText(this, "Error: Phone number not provided", Toast.LENGTH_SHORT).show()
@@ -101,7 +102,7 @@ class HawkerFormActivity : AppCompatActivity() {
                         // You can use it here or pass it to another function
                         hawkerFormData = HawkerFormData(
                             0,
-                            null,
+                            hawkerId,
                             fragmentA?.editTextName?.text.toString(),
                             fragmentA?.editTextCategory?.text.toString(),
                             fragmentA?.editTextPhone?.text.toString(),
@@ -131,7 +132,6 @@ class HawkerFormActivity : AppCompatActivity() {
                 hawkerFormData = hawkerFormData?.copy(items = itemsList)
 
                 Log.d("HawkerFormActivity", "HawkerFormData: $hawkerFormData")
-
 
                 RetrofitHelper.sendHawkersData(this,  hawkerFormData!!) {
                     Log.d("HawkerFormActivity", "Response: $it")

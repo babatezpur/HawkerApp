@@ -94,7 +94,7 @@ object RetrofitHelper {
         // Check if imagePath is not null or empty
         if (!hawkerData.imageurl.isNullOrEmpty()) {
             uploadImageAndGetPublicUrl(hawkerData.imageurl!!, { imageUrl ->
-                Log.d("RetrofitHelper", imageUrl)
+                Log.d("RetrofitHelper", "Image url : $imageUrl")
                 // Set the returned URL to hawkerData.imagePath
                 hawkerData.imageurl = imageUrl
 
@@ -118,10 +118,6 @@ object RetrofitHelper {
         }
 
         val hawkersFetchApi = getInstance().create(HawkersAPI::class.java)
-
-        // Convert the HawkerFormData to JSON
-        val hawkerDataJson = Gson().toJson(hawkerData)
-        val hawkerDataRequestBody = hawkerDataJson.toRequestBody("application/json".toMediaTypeOrNull())
 
         val call = hawkersFetchApi.sendHawkerData("Bearer $token", hawkerData)
         call.enqueue(object : Callback<HawkerInfo> {
