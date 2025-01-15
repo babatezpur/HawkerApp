@@ -5,6 +5,7 @@ import android.util.Log
 import com.hawkerapp.app.models.HawkerFormData
 import com.hawkerapp.app.models.HawkerInfo
 import com.hawkerapp.app.models.Item
+import com.hawkerapp.app.network.RetrofitHelper
 import com.hawkerapp.app.repositories.HawkerInfoRepository
 import com.hawkerapp.app.repositories.HawkerLoginDataRepository
 import com.hawkerapp.app.store.SessionManager
@@ -40,7 +41,8 @@ class HawkerManager (private val context: Context) {
             hawkerInfo.phone,
             hawkerInfo.location,
             hawkerInfo.items,
-
+            true,
+            hawkerInfo.imageUrl
             )
         CoroutineScope(Dispatchers.IO).launch {
             insertHawkerLoginData(hawkerData)
@@ -74,5 +76,21 @@ class HawkerManager (private val context: Context) {
 
     suspend fun deleteItem(item: Item) {
 
+    }
+
+    fun updateHawkerImage(context: Context, activeHawkerId: String?, imageUri: String, onComplete : (HawkerInfo?) -> Unit ) {
+        CoroutineScope(Dispatchers.IO).launch {
+            RetrofitHelper.updateImage(context, activeHawkerId, imageUri){
+                if(it == null) {
+                    Log.d("HawkerManager", "Image update failed")
+                    onComplete(null)
+                    return@updateImage
+                }
+                Log.d("HawkerManager", "Image updated successfully")
+                storeHawkerData(it)
+                onComplete(it)
+
+            }
+        }
     }
 }

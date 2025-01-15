@@ -26,8 +26,6 @@ class HawkerFormActivity : AppCompatActivity() {
     private val hawkerManager = HawkerManager(this)
     private lateinit var nextButton: Button
 
-    //private lateinit var hawkerFormData: HawkerFormData
-
 
     // Variable to track the current fragment
     private var currentFragment: Int = FRAGMENT_A
@@ -115,7 +113,6 @@ class HawkerFormActivity : AppCompatActivity() {
                     },
                     { errorMessage ->
                         // This block is executed when there's an error retrieving the location
-                        // Handle the error message accordingly
                         Log.e("HawkerApp", errorMessage)
                     }
                 )
@@ -124,7 +121,6 @@ class HawkerFormActivity : AppCompatActivity() {
             }
 
             FRAGMENT_B -> {
-                hawkerLoginDataRepository = HawkerLoginDataRepository(this)
                 val fragmentB =
                     supportFragmentManager.findFragmentById(R.id.fragment_container) as? HawkerItemDetails
                 val itemsList = fragmentB?.getItemsList()?.subList(1, fragmentB.getItemsList().size)

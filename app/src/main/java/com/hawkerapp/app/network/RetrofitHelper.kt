@@ -59,6 +59,46 @@ object RetrofitHelper {
         })
     }
 
+    fun updateImage(context: Context, hawkerId: String?, imagePath: String?, onComplete: (HawkerInfo?) -> Unit) {
+        if(imagePath.isNullOrEmpty() || hawkerId.isNullOrEmpty()) {
+            Log.d("RetrofitHelper", "Image path or hawkerId is null/empty")
+            onComplete(null)
+            return
+        }
+        uploadImageAndGetPublicUrl(imagePath, { imageUrl ->
+            Log.d("RetrofitHelper", "Image url : $imageUrl")
+            updateImageForHawker(context, hawkerId, imageUrl, onComplete)
+        }, { error ->
+            Log.d("RetrofitHelper", "Image update failed: $error")
+        })
+    }
+
+    private fun updateImageForHawker(context: Context, hawkerId: String, imageUrl: String, onComplete: (HawkerInfo?) -> Unit) {
+        val token = SessionManager.getAuthToken(context) ?: run {
+            onComplete(null)
+            return
+        }
+        // create a json with the image url
+        val json = JsonObject()
+        json.addProperty("imageUrl", imageUrl)
+        val hawkersFetchApi = getInstance().create(HawkersAPI::class.java)
+        val call = hawkersFetchApi.updateImageForHawker("Bearer $token", json, hawkerId )
+        call.enqueue(object : Callback<HawkerInfo> {
+            override fun onResponse(call: Call<HawkerInfo>, response: Response<HawkerInfo>) {
+                if(response.isSuccessful) {
+                    Log.d("RetrofitHelper", "Image updated successfully")
+                    onComplete(response.body())
+                } else {
+                    Log.d("RetrofitHelper", "Unsuccesful image update: ${response}")
+                }
+            }
+
+            override fun onFailure(call: Call<HawkerInfo>, t: Throwable) {
+                Log.d("RetrofitHelper", "Error in image update: ${t.message}")
+            }
+        })
+    }
+
     private fun uploadImageAndGetPublicUrl(imagePath: String, onSuccess: (String) -> Unit, onFailure: (String) -> Unit) {
         val file = File(imagePath)
         if (!file.exists()) {

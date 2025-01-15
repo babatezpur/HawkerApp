@@ -9,6 +9,7 @@ import androidx.lifecycle.MutableLiveData
 import com.hawkerapp.app.managers.HawkerManager
 import com.hawkerapp.app.models.UserRequestData
 import androidx.lifecycle.viewModelScope
+import com.hawkerapp.app.models.HawkerFormData
 import com.hawkerapp.app.models.HawkerInfo
 import com.hawkerapp.app.network.RetrofitHelper
 import kotlinx.coroutines.Dispatchers
@@ -27,10 +28,14 @@ class HawkerViewViewModel(application: Application) : AndroidViewModel(applicati
     private val _currentLocation = MutableLiveData<Location>()
     val currentLocation: LiveData<Location> = _currentLocation
 
+    private val _hawkerInfo = MutableLiveData<HawkerFormData>()
+    val hawkerInfo: LiveData<HawkerFormData> = _hawkerInfo
+
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
             activeHawkerId = hawkerManager.getActiveHawkerId()
+            loadHawkerInfo();
             checkForNewRequests(context = application)
         }
     }
@@ -42,6 +47,30 @@ class HawkerViewViewModel(application: Application) : AndroidViewModel(applicati
                     _customerRequests.postValue(customers)
                     _hasUnreadRequests.postValue(customers.isNotEmpty())
                 }
+            }
+        }
+    }
+
+    private fun loadHawkerInfo() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val hawkerId = hawkerManager.getActiveHawkerId()
+            val hawker = hawkerManager.getHawkerInfo(hawkerId)
+            hawker?.let {
+                _hawkerInfo.postValue(it)
+            }
+        }
+    }
+
+    fun updateHawkerImage(context: Context, imageUri: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                // Here you would update the image through your API
+                hawkerManager.updateHawkerImage(context, activeHawkerId, imageUri){
+                    loadHawkerInfo()
+                }
+
+            } catch (e: Exception) {
+                // Handle error
             }
         }
     }

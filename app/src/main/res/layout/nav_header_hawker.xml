@@ -10,10 +10,13 @@
 
     <ImageView
         android:id="@+id/hawkerImageView"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:src="@drawable/default_profile"
         android:contentDescription="Hawker Profile"
-        android:scaleType="centerCrop" />
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackgroundBorderless"/>
 
     <TextView
         android:id="@+id/hawkerNameTextView"

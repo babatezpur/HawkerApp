@@ -3,6 +3,7 @@ package com.hawkerapp.app.models
 import android.os.Parcel
 import android.os.Parcelable
 import androidx.annotation.NonNull
+import androidx.annotation.Nullable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Ignore
@@ -15,7 +16,7 @@ import java.io.File
 @Serializable
 @Entity(tableName = "hawker_data")
 data class HawkerFormData (
-    @PrimaryKey @NonNull
+    @PrimaryKey
     @ColumnInfo(name = "serialId")
     var serialId: Int = 0,
 

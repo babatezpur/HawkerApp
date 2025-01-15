@@ -16,6 +16,7 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Headers
 import retrofit2.http.Multipart
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Part
 import retrofit2.http.Path
@@ -98,5 +99,12 @@ interface HawkersAPI {
         "Cookie: JSESSIONID=7BF55B5F644787F928FEA318B4244E06"
     )
     fun verifyOtp(@Body otpVerifyRequest: OtpVerifyRequest): Call<OtpVerificationResponse>
+
+    @PATCH("hawkers/{id}")
+    fun updateImageForHawker(
+        @Header("Authorization") authHeader: String,
+        @Body requestData: JsonObject,
+        @Path("id") id: String
+    ): Call<HawkerInfo>
 
 }

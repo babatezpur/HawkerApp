@@ -1,11 +1,17 @@
 package com.hawkerapp.app.views
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.location.Location
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Environment
+import android.provider.MediaStore
 import android.util.Log
 import android.view.Gravity
 import android.view.Menu
@@ -18,8 +24,11 @@ import android.widget.PopupWindow
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.ViewModelProvider
@@ -49,6 +58,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 
 // the  utton isnt working. check it.
@@ -68,9 +83,15 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var hawkerManager: HawkerManager
     private var notificationMenuItem: MenuItem? = null
+    private lateinit var currentPhotoPath: String
+    private var imageFile: File? = null
+
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1
+        private const val PICK_IMAGE_REQUEST = 2
+        private const val CAMERA_REQUEST_CODE = 3
+        private const val CAMERA_PERMISSION_REQUEST = 100
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -267,7 +288,7 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    private fun loadCustomers() {
+    /* private fun loadCustomers() {
 
         // Fetch customers from the server
         // Display customers on the map
@@ -337,21 +358,21 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
     }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                onMapReady(mMap)
-            } else {
-                Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
+*/
+//    override fun onRequestPermissionsResult(
+//        requestCode: Int,
+//        permissions: Array<out String>,
+//        grantResults: IntArray
+//    ) {
+//        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+//        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+//            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+//                onMapReady(mMap)
+//            } else {
+//                Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show()
+//            }
+//        }
+//    }
 
     private fun setupNavigation() {
         toolbar = findViewById(R.id.toolbar)
@@ -377,23 +398,29 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
         val hawkerNameTextView = headerView.findViewById<TextView>(R.id.hawkerNameTextView)
         val hawkerCategoryTextView = headerView.findViewById<TextView>(R.id.hawkerCategoryTextView)
 
-        // Load hawker info from hawkerManager
-        lifecycleScope.launch(Dispatchers.IO) {
-            val hawkerId = hawkerManager.getActiveHawkerId()
-            val hawker = hawkerManager.getHawkerInfo(hawkerId)  // Assuming this method exists
-            withContext(Dispatchers.Main) {
-                hawker?.let {
-                    // Load hawker image using Glide
-                    Glide.with(this@HawkerViewActivity)
-                        .load("https://picsum.photos/200/300")
-                        .circleCrop()
-                        .into(hawkerImageView)
-
-                    hawkerNameTextView.text = hawker.name
-                    hawkerCategoryTextView.text = hawker.category
-                }
-            }
+        hawkerImageView.setOnClickListener {
+            showImagePickerOptions()
         }
+
+        // Load hawker info from hawkerManager
+        // Observe hawker info changes
+        viewModel.hawkerInfo.observe(this) { hawker ->
+            // Load hawker image using Glide
+            Glide.with(this)
+                .load(hawker.imageurl)
+                .circleCrop()
+                .placeholder(R.drawable.default_profile)
+                .error(R.drawable.default_profile)
+                .into(hawkerImageView)
+
+            hawkerNameTextView.text = hawker.name
+            hawkerCategoryTextView.text = hawker.category
+        }
+
+//        // Set click listener for image selection
+//        hawkerImageView.setOnClickListener {
+//            openImagePicker()
+//        }
 
         // Setup navigation item clicks
         navigationView.setNavigationItemSelectedListener { menuItem ->
@@ -416,6 +443,138 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
             }
             drawerLayout.closeDrawer(GravityCompat.START)
             true
+        }
+    }
+
+    private fun showImagePickerOptions() {
+        val options = arrayOf("Take Photo", "Choose from Gallery")
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Select Option")
+        builder.setItems(options) { _, which ->
+            when (which) {
+                0 -> checkCameraPermission() // Take Photo
+                1 -> openImagePicker() // Choose from Gallery
+            }
+        }
+        builder.show()
+    }
+
+    private fun checkCameraPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+            != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.CAMERA),
+                CAMERA_PERMISSION_REQUEST
+            )
+        } else {
+            openCamera()
+        }
+    }
+
+    private fun openCamera() {
+        val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        if (takePictureIntent.resolveActivity(packageManager) != null) {
+            val photoFile: File? = try {
+                createImageFile()
+            } catch (ex: IOException) {
+                Toast.makeText(this, "Error occurred while creating file", Toast.LENGTH_SHORT).show()
+                null
+            }
+            photoFile?.also {
+                val photoURI: Uri = FileProvider.getUriForFile(
+                    this,
+                    "com.hawkerapp.app.fileprovider",
+                    it
+                )
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
+                startActivityForResult(takePictureIntent, CAMERA_REQUEST_CODE)
+            }
+        }
+    }
+
+    private fun openImagePicker() {
+        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        startActivityForResult(intent, PICK_IMAGE_REQUEST)
+    }
+
+    @Throws(IOException::class)
+    private fun createImageFile(): File {
+        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val storageDir: File = getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
+        return File.createTempFile("JPEG_${timeStamp}_", ".jpg", storageDir).apply {
+            currentPhotoPath = absolutePath
+        }
+    }
+
+    private fun bitmapToFile(bitmap: Bitmap, quality: Int = 50): File {
+        val file = File(cacheDir, "temp_image.jpg")
+        val out = FileOutputStream(file)
+        bitmap.compress(Bitmap.CompressFormat.JPEG, quality, out)
+        out.flush()
+        out.close()
+        return file
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == CAMERA_PERMISSION_REQUEST) {
+            if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                openCamera()
+            } else {
+                Toast.makeText(this, "Camera permission is required to take a photo",
+                    Toast.LENGTH_SHORT).show()
+            }
+        } else if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                onMapReady(mMap)
+            } else {
+                Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        val headerView = navigationView.getHeaderView(0)
+        val hawkerImageView = headerView.findViewById<ImageView>(R.id.hawkerImageView)
+
+        when (requestCode) {
+            PICK_IMAGE_REQUEST -> {
+                if (resultCode == Activity.RESULT_OK && data?.data != null) {
+                    val imageUri: Uri = data.data!!
+                    val inputStream = contentResolver.openInputStream(imageUri)
+                    val selectedImage: Bitmap = BitmapFactory.decodeStream(inputStream)
+                    imageFile = bitmapToFile(selectedImage)
+
+                    // Update UI and ViewModel
+                    Glide.with(this)
+                        .load(imageFile)
+                        .circleCrop()
+                        .into(hawkerImageView)
+
+                    viewModel.updateHawkerImage(this, imageFile!!.path)
+                }
+            }
+            CAMERA_REQUEST_CODE -> {
+                if (resultCode == Activity.RESULT_OK) {
+                    val capturedImage: Bitmap = BitmapFactory.decodeFile(currentPhotoPath)
+                    imageFile = bitmapToFile(capturedImage)
+
+                    // Update UI and ViewModel
+                    Glide.with(this)
+                        .load(imageFile)
+                        .circleCrop()
+                        .into(hawkerImageView)
+
+                    viewModel.updateHawkerImage(this, imageFile!!.path)
+                }
+            }
         }
     }
 
