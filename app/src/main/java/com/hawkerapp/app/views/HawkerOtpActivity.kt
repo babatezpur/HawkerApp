@@ -16,17 +16,12 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import com.hawkerapp.app.R
 import com.hawkerapp.app.SMSReceiver
-import com.hawkerapp.app.managers.HawkerManager
-import com.hawkerapp.app.models.HawkerFormData
-import com.hawkerapp.app.models.OtpVerifyRequest
-import com.hawkerapp.app.network.RetrofitHelper
-import com.hawkerapp.app.store.SessionManager
 import com.hawkerapp.app.viewmodels.HawkerOtpViewModel
 import com.hawkerapp.app.viewmodels.NavigationEvent
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import com.google.android.gms.auth.api.credentials.Credential
+import com.google.android.gms.auth.api.credentials.Credentials
+import com.google.android.gms.auth.api.credentials.HintRequest
+import android.content.IntentSender
 
 class HawkerOtpActivity : AppCompatActivity() {
     private lateinit var viewModel: HawkerOtpViewModel
@@ -47,6 +42,7 @@ class HawkerOtpActivity : AppCompatActivity() {
         initializeViews()
         setupClickListeners()
         observeViewModel()
+        requestHintPermission()
     }
 
     private fun initializeViews() {
@@ -100,6 +96,38 @@ class HawkerOtpActivity : AppCompatActivity() {
                     startActivity(intent)
                     finish()
                 }
+            }
+        }
+        viewModel.phoneNumber.observe(this) { number ->
+            phoneEditText.setText(number)
+        }
+    }
+
+    private fun requestHintPermission() {
+        val hintRequest = HintRequest.Builder()
+            .setPhoneNumberIdentifierSupported(true)
+            .build()
+
+        val credentialsClient = Credentials.getClient(this)
+        val intent = credentialsClient.getHintPickerIntent(hintRequest)
+
+        try {
+            startIntentSenderForResult(
+                intent.intentSender,
+                CREDENTIAL_PICKER_REQUEST,
+                null, 0, 0, 0
+            )
+        } catch (e: IntentSender.SendIntentException) {
+            e.printStackTrace()
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == CREDENTIAL_PICKER_REQUEST && resultCode == RESULT_OK) {
+            val credential: Credential? = data?.getParcelableExtra(Credential.EXTRA_KEY)
+            credential?.id?.let { phoneNumber ->
+                viewModel.setPhoneNumber(phoneNumber)
             }
         }
     }
@@ -174,5 +202,6 @@ class HawkerOtpActivity : AppCompatActivity() {
 
     companion object {
         private const val PERMISSION_REQUEST_CODE = 123
+        private const val CREDENTIAL_PICKER_REQUEST = 1
     }
 }

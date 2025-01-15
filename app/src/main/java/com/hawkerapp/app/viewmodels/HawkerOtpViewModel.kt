@@ -39,6 +39,13 @@ class HawkerOtpViewModel(application: Application) : AndroidViewModel(applicatio
     private val _errorMessage = MutableLiveData<String>()
     val errorMessage: LiveData<String> = _errorMessage
 
+    private val _phoneNumber = MutableLiveData<String>()
+    val phoneNumber: LiveData<String> = _phoneNumber
+
+    fun setPhoneNumber(number: String) {
+        _phoneNumber.value = number.filter { it.isDigit() }.takeLast(10)
+    }
+
     fun requestOtp(phoneNumber: String) {
         if (phoneNumber.isEmpty() || phoneNumber.length != 10) {
             _errorMessage.value = "Please enter a valid phone number"
@@ -135,7 +142,7 @@ class HawkerOtpViewModel(application: Application) : AndroidViewModel(applicatio
 }
 
 sealed class NavigationEvent {
-    object NavigateToMain : NavigationEvent()
+    data object NavigateToMain : NavigationEvent()
     data class NavigateToRegistration(
         val phoneNumber: String,
         val hawkerId: String?
