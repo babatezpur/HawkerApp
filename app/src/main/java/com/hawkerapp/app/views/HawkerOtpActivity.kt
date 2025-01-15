@@ -13,6 +13,7 @@ import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModelProvider
 import com.hawkerapp.app.R
 import com.hawkerapp.app.SMSReceiver
 import com.hawkerapp.app.managers.HawkerManager
@@ -20,42 +21,87 @@ import com.hawkerapp.app.models.HawkerFormData
 import com.hawkerapp.app.models.OtpVerifyRequest
 import com.hawkerapp.app.network.RetrofitHelper
 import com.hawkerapp.app.store.SessionManager
+import com.hawkerapp.app.viewmodels.HawkerOtpViewModel
+import com.hawkerapp.app.viewmodels.NavigationEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class HawkerOtpActivity : AppCompatActivity() {
+    private lateinit var viewModel: HawkerOtpViewModel
     private lateinit var phoneEditText: EditText
     private lateinit var otpEditText: EditText
     private lateinit var requestOtpButton: Button
     private lateinit var verifyOtpButton: Button
-    private val PERMISSION_REQUEST_CODE = 123
     private lateinit var loadingSpinner: ProgressBar
-    private lateinit var hawkerManager: HawkerManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_hawker_otp)
 
+        viewModel = ViewModelProvider(this)[HawkerOtpViewModel::class.java]
+
         checkSMSPermissions()
         setupSMSReceiver()
         initializeViews()
         setupClickListeners()
+        observeViewModel()
     }
 
     private fun initializeViews() {
         loadingSpinner = findViewById(R.id.loading_spinner)
-        loadingSpinner.visibility = View.GONE
-
         phoneEditText = findViewById(R.id.phone_edit_text)
         otpEditText = findViewById(R.id.otp_edit_text)
         requestOtpButton = findViewById(R.id.request_otp_button)
         verifyOtpButton = findViewById(R.id.verify_otp_button)
 
         // Initially hide OTP related views
+        loadingSpinner.visibility = View.GONE
         otpEditText.visibility = View.GONE
         verifyOtpButton.visibility = View.GONE
+    }
+
+    private fun observeViewModel() {
+        viewModel.loading.observe(this) { isLoading ->
+            loadingSpinner.visibility = if (isLoading) View.VISIBLE else View.GONE
+        }
+
+        viewModel.otpInputEnabled.observe(this) { enabled ->
+            otpEditText.visibility = if (enabled) View.VISIBLE else View.GONE
+        }
+
+        viewModel.phoneInputEnabled.observe(this) { enabled ->
+            phoneEditText.isEnabled = enabled
+        }
+
+        viewModel.verifyButtonEnabled.observe(this) { enabled ->
+            verifyOtpButton.apply {
+                this.visibility = if (enabled) View.VISIBLE else View.GONE
+                this.isEnabled = enabled
+            }
+        }
+
+        viewModel.errorMessage.observe(this) { message ->
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        }
+
+        viewModel.navigationEvent.observe(this) { event ->
+            when (event) {
+                is NavigationEvent.NavigateToMain -> {
+                    startActivity(Intent(this, HawkerViewActivity::class.java))
+                    finish()
+                }
+                is NavigationEvent.NavigateToRegistration -> {
+                    val intent = Intent(this, HawkerFormActivity::class.java).apply {
+                        putExtra("VERIFIED_PHONE", event.phoneNumber)
+                        putExtra("HAWKER_ID", event.hawkerId)
+                    }
+                    startActivity(intent)
+                    finish()
+                }
+            }
+        }
     }
 
     private fun checkSMSPermissions() {
@@ -90,100 +136,14 @@ class HawkerOtpActivity : AppCompatActivity() {
 
     private fun setupClickListeners() {
         requestOtpButton.setOnClickListener {
-            val phoneNumber = phoneEditText.text.toString()
-            if (phoneNumber.isEmpty() || phoneNumber.length != 10) {
-                Toast.makeText(this, "Please enter a valid phone number", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            RetrofitHelper.requestOtp(phoneNumber) { success ->
-                runOnUiThread {
-                    if (success) {
-                        otpEditText.visibility = View.VISIBLE
-                        verifyOtpButton.visibility = View.VISIBLE
-                        requestOtpButton.isEnabled = false
-                        phoneEditText.isEnabled = false
-                    } else {
-                        Toast.makeText(this, "Failed to send OTP. Please try again.", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
+            viewModel.requestOtp(phoneEditText.text.toString())
         }
 
         verifyOtpButton.setOnClickListener {
-            val phoneNumber = phoneEditText.text.toString()
-            val otp = otpEditText.text.toString()
-
-            if (otp.isEmpty() || otp.length != 6) {
-                Toast.makeText(this, "Please enter a valid OTP", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            loadingSpinner.visibility = View.VISIBLE
-            verifyOtpButton.isEnabled = false
-
-            val startTime = System.currentTimeMillis()
-            val otpVerifyRequest = OtpVerifyRequest(phoneNumber, otp)
-
-            RetrofitHelper.verifyOtp(otpVerifyRequest) { response ->
-                val elapsedTime = System.currentTimeMillis() - startTime
-                val remainingDelay = 2000 - elapsedTime
-
-                Handler(Looper.getMainLooper()).postDelayed({
-                    runOnUiThread {
-                        loadingSpinner.visibility = View.GONE
-                        verifyOtpButton.isEnabled = true
-
-                        if (response.isSuccessful && response.body() != null) {
-
-                            // Save the jwt token and hawker id in shared preferences
-                            val data = response.body()
-                            data?.hawkerData?.id?.let { it1 ->
-                                SessionManager.saveSession(
-                                    context = this,
-                                    hawkerId = it1,
-                                    token = data.token ?: return@let
-                                )
-                            }
-
-                            // Existing user case - go to main screen
-                            if(response.body()?.token != null && response.body()?.hawkerData?.name != null) {
-
-//                              updateHawkerIfNeeded(response.body()!!.hawkerData)
-                                response.body()!!.hawkerData?.let { it1 -> processHawkerData(it1) }
-                                val intent = Intent(this, HawkerViewActivity::class.java)
-                                startActivity(intent)
-                                finish()
-                            } else {
-                                // New user case - go to registration
-                                val intent = Intent(this, HawkerFormActivity::class.java).apply {
-                                    putExtra("VERIFIED_PHONE", phoneNumber)
-                                    putExtra("HAWKER_ID", response.body()?.hawkerData?.id)
-                                }
-                                startActivity(intent)
-                                finish()
-                            }
-                        } else {
-                            Toast.makeText(this, "Verification failed : ${response.message()}", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                }, maxOf(remainingDelay, 0))
-            }
-        }
-    }
-
-    private fun processHawkerData(hawkerData : HawkerFormData) {
-        // Save the hawker data in hawker's table calling storeHawkerData function from hawkermanager in a coroutinescope
-        hawkerData.apply { isActive = true }
-        hawkerManager = HawkerManager(this)
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                hawkerManager.insertHawkerLoginData(hawkerData)
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@HawkerOtpActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
-            }
+            viewModel.verifyOtp(
+                phoneNumber = phoneEditText.text.toString(),
+                otp = otpEditText.text.toString()
+            )
         }
     }
 
@@ -210,5 +170,9 @@ class HawkerOtpActivity : AppCompatActivity() {
                 ).show()
             }
         }
+    }
+
+    companion object {
+        private const val PERMISSION_REQUEST_CODE = 123
     }
 }
