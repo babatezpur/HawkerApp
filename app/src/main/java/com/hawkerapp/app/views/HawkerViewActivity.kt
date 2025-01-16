@@ -6,13 +6,11 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.location.Location
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
-import android.util.Log
 import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
@@ -52,9 +50,7 @@ import com.hawkerapp.app.MainActivity
 import com.hawkerapp.app.adapters.VisitRequestAdapter
 import com.hawkerapp.app.managers.HawkerManager
 import com.hawkerapp.app.models.UserRequestData
-import com.hawkerapp.app.network.RetrofitHelper
 import com.hawkerapp.app.viewmodels.HawkerViewViewModel
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -417,16 +413,11 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
             hawkerCategoryTextView.text = hawker.category
         }
 
-//        // Set click listener for image selection
-//        hawkerImageView.setOnClickListener {
-//            openImagePicker()
-//        }
-
         // Setup navigation item clicks
         navigationView.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.nav_profile -> {
-                    // startActivity(Intent(this, ProfileActivity::class.java))
+                    startActivity(Intent(this, ProfileViewActivity::class.java))
                 }
                 R.id.nav_manage_items -> {
                     startActivity(Intent(this, ManageItemsActivity::class.java))
