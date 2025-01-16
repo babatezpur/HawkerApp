@@ -4,10 +4,12 @@ import android.app.Dialog
 import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -15,24 +17,21 @@ import com.hawkerapp.app.R
 import com.hawkerapp.app.adapters.ManageItemsAdapter
 import com.hawkerapp.app.managers.HawkerManager
 import com.hawkerapp.app.models.Item
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-
+import com.hawkerapp.app.viewmodels.ManageItemsViewModel
 // ManageItemsActivity.kt
 class ManageItemsActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: ManageItemsAdapter
-    private lateinit var hawkerManager: HawkerManager
-    private var currentItems: MutableList<Item> = mutableListOf()  // Track current items
+    private lateinit var viewModel: ManageItemsViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_manage_items)
 
-        hawkerManager = HawkerManager(application)
+        viewModel = ViewModelProvider(this)[ManageItemsViewModel::class.java]
         setupRecyclerView()
-        loadItems()
+        setupObservers()
+        viewModel.loadItems() // Initial load
     }
 
     private fun setupRecyclerView() {
@@ -45,19 +44,18 @@ class ManageItemsActivity : AppCompatActivity() {
         recyclerView.adapter = adapter
     }
 
-    private fun loadItems() {
-        lifecycleScope.launch(Dispatchers.IO) {
-            val hawkerId = hawkerManager.getActiveHawkerId()
-            hawkerId?.let {
-                val hawkerInfo = hawkerManager.getHawkerInfo(it)
-                withContext(Dispatchers.Main) {
-                    currentItems.clear()
-                    currentItems.addAll(hawkerInfo.items ?: emptyList()) // Provide empty list if null
-                    adapter.submitList(currentItems.toList())
-                }
+    private fun setupObservers() {
+        viewModel.items.observe(this) { items ->
+            adapter.submitList(items)
+        }
+
+        viewModel.updateStatus.observe(this) { success ->
+            if (!success) {
+                Toast.makeText(this, "Failed to update items", Toast.LENGTH_SHORT).show()
             }
         }
     }
+
 
     private fun showUpdateDialog(item: Item) {
         val dialog = Dialog(this)
@@ -75,12 +73,8 @@ class ManageItemsActivity : AppCompatActivity() {
             val newQuantity = quantityEditText.text.toString().toIntOrNull()
 
             if (newPrice != null && newQuantity != null) {
-                // Find item index and update in the list
-                val index = currentItems.indexOfFirst { it.name == item.name }
-                if (index != -1) {
-                    currentItems[index] = item.copy(price = newPrice, quantity = newQuantity)
-                    updateItem(currentItems.toList())
-                }
+                val updatedItem = item.copy(price = newPrice, quantity = newQuantity)
+                viewModel.updateItem(item = updatedItem)
                 dialog.dismiss()
             } else {
                 Toast.makeText(this, "Please enter valid values", Toast.LENGTH_SHORT).show()
@@ -95,27 +89,34 @@ class ManageItemsActivity : AppCompatActivity() {
             .setTitle("Delete Item")
             .setMessage("Are you sure you want to delete ${item.name}?")
             .setPositiveButton("Yes") { _, _ ->
-                val index = currentItems.indexOfFirst { it.name == item.name }
-                if (index != -1) {
-                    currentItems.removeAt(index)
-                    updateItem(currentItems.toList())
-                }
+                viewModel.deleteItem(item)
             }
             .setNegativeButton("No", null)
             .show()
     }
 
-    private fun updateItem(updatedItems: List<Item>) {
-        lifecycleScope.launch {
-            hawkerManager.updateItem(updatedItems)
-            loadItems() // Reload the list
-        }
-    }
+//    private fun updateItem(updatedItems: List<Item>) {
+//        lifecycleScope.launch(Dispatchers.IO) {  // Change this line to specify Dispatchers.IO
+//            try {
+//                val updatedHawker = hawkerManager.updateHawkerItems(this@ManageItemsActivity, updatedItems)
+//                updatedHawker?.let {
+//                    hawkerManager.updateItem(it.items)
+//                    withContext(Dispatchers.Main) {  // Switch back to Main thread for UI updates
+//                        loadItems() // Reload the list
+//                    }
+//                }
+//            } catch (e: Exception) {
+//                withContext(Dispatchers.Main) {  // Switch to Main thread for error handling
+//                    // Handle error
+//                }
+//            }
+//        }
+//    }
 
-    private fun deleteItem(item: Item) {
-        lifecycleScope.launch {
-            hawkerManager.deleteItem(item)
-            loadItems() // Reload the list
-        }
-    }
+//    private fun deleteItem(item: Item) {
+//        lifecycleScope.launch {
+//            hawkerManager.deleteItem(item)
+//            loadItems() // Reload the list
+//        }
+//    }
 }

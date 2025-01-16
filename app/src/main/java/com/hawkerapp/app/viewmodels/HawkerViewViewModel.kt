@@ -3,6 +3,7 @@ package com.hawkerapp.app.viewmodels
 import android.app.Application
 import android.content.Context
 import android.location.Location
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -64,13 +65,17 @@ class HawkerViewViewModel(application: Application) : AndroidViewModel(applicati
     fun updateHawkerImage(context: Context, imageUri: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                // Here you would update the image through your API
-                hawkerManager.updateHawkerImage(context, activeHawkerId, imageUri){
+                val result = hawkerManager.updateHawkerImage(context, activeHawkerId, imageUri)
+                if (result != null) {
                     loadHawkerInfo()
+                } else {
+                    // Handle error - maybe update a status LiveData to show error
+                    // _updateStatus.postValue(false)
                 }
-
             } catch (e: Exception) {
-                // Handle error
+                Log.e("HawkerViewViewModel", "Error updating image: ${e.message}")
+                // Handle error - maybe update a status LiveData to show error
+                // _updateStatus.postValue(false)
             }
         }
     }

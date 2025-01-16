@@ -4,11 +4,13 @@ import android.content.Context
 import com.hawkerapp.app.models.HawkerInfo
 import android.util.Log
 import com.google.gson.Gson
+import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.hawkerapp.app.models.CustomLocation
 import com.hawkerapp.app.models.FCMData
 import com.hawkerapp.app.models.HawkerFormData
 import com.hawkerapp.app.models.ImageUrlData
+import com.hawkerapp.app.models.Item
 import com.hawkerapp.app.models.OtpResult
 import com.hawkerapp.app.models.OtpVerificationResponse
 import com.hawkerapp.app.models.OtpVerifyRequest
@@ -59,42 +61,88 @@ object RetrofitHelper {
         })
     }
 
-    fun updateImage(context: Context, hawkerId: String?, imagePath: String?, onComplete: (HawkerInfo?) -> Unit) {
-        if(imagePath.isNullOrEmpty() || hawkerId.isNullOrEmpty()) {
-            Log.d("RetrofitHelper", "Image path or hawkerId is null/empty")
+    fun updateHawkerFieldInServer(
+        context: Context,
+        hawkerId: String?,
+        field: String,
+        value: Any,
+        onComplete: (HawkerInfo?) -> Unit
+    ) {
+        if(hawkerId.isNullOrEmpty()) {
+            Log.d("RetrofitHelper", "HawkerId is null/empty")
             onComplete(null)
             return
         }
-        uploadImageAndGetPublicUrl(imagePath, { imageUrl ->
-            Log.d("RetrofitHelper", "Image url : $imageUrl")
-            updateImageForHawker(context, hawkerId, imageUrl, onComplete)
-        }, { error ->
-            Log.d("RetrofitHelper", "Image update failed: $error")
-        })
+
+        // Special case for image as it needs to be uploaded first
+        if(field == "imageUrl" && value is String) {
+            uploadImageAndGetPublicUrl(value, { imageUrl ->
+                Log.d("RetrofitHelper", "Image url : $imageUrl")
+                updateHawkerInApi(context, hawkerId, field, imageUrl, onComplete)
+            }, { error ->
+                Log.d("RetrofitHelper", "Image update failed: $error")
+                onComplete(null)
+            })
+        } else {
+            // For all other fields, update directly
+            updateHawkerInApi(context, hawkerId, field, value, onComplete)
+        }
     }
 
-    private fun updateImageForHawker(context: Context, hawkerId: String, imageUrl: String, onComplete: (HawkerInfo?) -> Unit) {
+    private fun updateHawkerInApi(
+        context: Context,
+        hawkerId: String,
+        field: String,
+        value: Any,
+        onComplete: (HawkerInfo?) -> Unit
+    ) {
         val token = SessionManager.getAuthToken(context) ?: run {
             onComplete(null)
             return
         }
-        // create a json with the image url
+
         val json = JsonObject()
-        json.addProperty("imageUrl", imageUrl)
+        when(value) {
+            is String -> json.addProperty(field, value)
+            is Number -> json.addProperty(field, value)
+            is Boolean -> json.addProperty(field, value)
+            is List<*> -> {
+                // Check if it's a List of Items
+                if (value.all { it is Item }) {
+                    val itemsArray = JsonArray()
+                    value.forEach { item ->
+                        item as Item  // Safe cast since we checked above
+                        val itemObject = JsonObject().apply {
+                            addProperty("name", item.name)
+                            addProperty("price", item.price)
+                            addProperty("quantity", item.quantity)
+                        }
+                        itemsArray.add(itemObject)
+                    }
+                    json.add(field, itemsArray)
+                }
+            }
+
+        }
+        Log.d("RetrofitHelper", "Json: $json")
+
         val hawkersFetchApi = getInstance().create(HawkersAPI::class.java)
-        val call = hawkersFetchApi.updateImageForHawker("Bearer $token", json, hawkerId )
+        val call = hawkersFetchApi.updateImageForHawker("Bearer $token", json, hawkerId)
+
         call.enqueue(object : Callback<HawkerInfo> {
             override fun onResponse(call: Call<HawkerInfo>, response: Response<HawkerInfo>) {
                 if(response.isSuccessful) {
-                    Log.d("RetrofitHelper", "Image updated successfully")
+                    Log.d("RetrofitHelper", "Field $field updated successfully : ${response.body()}")
                     onComplete(response.body())
                 } else {
-                    Log.d("RetrofitHelper", "Unsuccesful image update: ${response}")
+                    Log.d("RetrofitHelper", "Unsuccessful update: $response")
+                    onComplete(null)
                 }
             }
 
             override fun onFailure(call: Call<HawkerInfo>, t: Throwable) {
-                Log.d("RetrofitHelper", "Error in image update: ${t.message}")
+                Log.d("RetrofitHelper", "Error in update: ${t.message}")
+                onComplete(null)
             }
         })
     }

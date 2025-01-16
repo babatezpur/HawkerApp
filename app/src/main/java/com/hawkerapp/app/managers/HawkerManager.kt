@@ -11,7 +11,9 @@ import com.hawkerapp.app.repositories.HawkerLoginDataRepository
 import com.hawkerapp.app.store.SessionManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 
 class HawkerManager (private val context: Context) {
@@ -78,18 +80,32 @@ class HawkerManager (private val context: Context) {
 
     }
 
-    fun updateHawkerImage(context: Context, activeHawkerId: String?, imageUri: String, onComplete : (HawkerInfo?) -> Unit ) {
-        CoroutineScope(Dispatchers.IO).launch {
-            RetrofitHelper.updateImage(context, activeHawkerId, imageUri){
-                if(it == null) {
-                    Log.d("HawkerManager", "Image update failed")
-                    onComplete(null)
-                    return@updateImage
-                }
-                Log.d("HawkerManager", "Image updated successfully")
-                storeHawkerData(it)
-                onComplete(it)
+    suspend fun updateHawkerImage(context: Context, activeHawkerId: String?, imageUri: String): HawkerInfo? {
+        return updateHawkerField(context, activeHawkerId, "imageUrl", imageUri)
+    }
 
+    suspend fun updateHawkerItems(context: Context, items: List<Item>): HawkerInfo? {
+        val activeHawkerId = getActiveHawkerId()
+        return updateHawkerField(context, activeHawkerId, "items", items)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private suspend fun updateHawkerField(
+        context: Context,
+        activeHawkerId: String?,
+        field: String,
+        value: Any
+    ): HawkerInfo? = withContext(Dispatchers.IO) {
+        return@withContext suspendCancellableCoroutine { continuation ->
+            RetrofitHelper.updateHawkerFieldInServer(context, activeHawkerId, field, value) { updatedHawker ->
+                if (updatedHawker == null) {
+                    Log.d("HawkerManager", "Field update failed")
+                    continuation.resume(null) { }
+                    return@updateHawkerFieldInServer
+                }
+                Log.d("HawkerManager", "Field updated successfully")
+                storeHawkerData(updatedHawker)
+                continuation.resume(updatedHawker) { }
             }
         }
     }
