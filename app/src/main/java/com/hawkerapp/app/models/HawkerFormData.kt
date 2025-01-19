@@ -43,9 +43,10 @@ data class HawkerFormData (
 
     // Add this property to hold the image path
     @ColumnInfo(name = "imageUrl")
-    @SerializedName("imageUrl") var imageurl: String? = null // Image path as a string
+    @SerializedName("imageUrl") var imageurl: String? = null, // Image path as a string
 
-
+    @ColumnInfo(name = "created_at")
+    @SerializedName("createdAt") var createdAt: String? = null,
 ) {
 }
 

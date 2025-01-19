@@ -105,6 +105,11 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
         observeViewModel()
     }
 
+    override fun onResume() {
+        super.onResume()
+        viewModel.loadHawkerInfo()
+    }
+
     private fun setupToolbar() {
         toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
@@ -142,23 +147,6 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
         mapFragment.getMapAsync(this)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
     }
-
-//    private fun setupViews() {
-//        // Remove btnFetchRequests initialization as we're removing the button
-//        toolbar.inflateMenu(R.menu.toolbar_menu)
-//        notificationMenuItem = toolbar.menu.findItem(R.id.action_notifications)
-//
-//        toolbar.setOnMenuItemClickListener { menuItem ->
-//            when (menuItem.itemId) {
-//                R.id.action_notifications -> {
-//                    viewModel.loadCustomers()
-//                    viewModel.markRequestsAsRead()
-//                    true
-//                }
-//                else -> false
-//            }
-//        }
-//    }
 
     private fun observeViewModel() {
         viewModel.customerRequests.observe(this) { customers ->
@@ -283,92 +271,6 @@ class HawkerViewActivity : AppCompatActivity(), OnMapReadyCallback {
             location?.let { viewModel.updateCurrentLocation(it) }
         }
     }
-
-    /* private fun loadCustomers() {
-
-        // Fetch customers from the server
-        // Display customers on the map
-        if (activeHawkerId == null) {
-            Log.d("hawkerViewActivity", "No active hawker")
-            return
-        }
-        RetrofitHelper.fetchUserRequests(this, activeHawkerId!!) {
-            Log.d("HawkerViewActivity", "Users fetched")
-            val customers = it
-            val markersMap = mutableMapOf<String, Marker>()
-
-            for (user in it) {
-                val userLocation = LatLng(user.location.latitude, user.location.longitude)
-                val marker =
-                    mMap.addMarker(MarkerOptions().position(userLocation).title(user.customerName))
-                if (marker != null) {
-                    markersMap[user.customerName] = marker
-                }
-            }
-
-
-
-            Log.d(
-                "HawkerViewActivity",
-                "Inflating the requests popup with customers: ${customers.size}"
-            )
-            val floatingWindowLayout =
-                layoutInflater.inflate(R.layout.visit_requests_floating_window, null)
-            val recyclerView =
-                floatingWindowLayout.findViewById<RecyclerView>(R.id.visitReqsRecyclerView)
-
-            Log.d(
-                "HawkerViewActivity",
-                "The linearlayoutmanager is : ${recyclerView.layoutManager}"
-            )
-            if (recyclerView.layoutManager == null)
-                recyclerView.layoutManager = LinearLayoutManager(this)
-
-
-            val adapter = VisitRequestAdapter(customers) { user ->
-                val marker = markersMap[user.customerName]
-                if (marker != null) {
-                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.position, 15f))
-                    marker.showInfoWindow()  // Show info window to highlight
-                    marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)) // Custom method to highlight marker
-                }
-                floatingWindow.dismiss()
-            }
-            recyclerView.adapter = adapter
-            Log.d(
-                "HawkerViewActivity",
-                "Inflating completed, recyclerView: ${recyclerView.adapter}"
-            )
-
-            floatingWindow = PopupWindow(
-                floatingWindowLayout,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                true
-            )
-
-            Log.d("HawkerViewActivity", "Showing window")
-            floatingWindow.showAtLocation(window.decorView.rootView, Gravity.CENTER, 0, 0)
-
-        }
-
-
-    }
-*/
-//    override fun onRequestPermissionsResult(
-//        requestCode: Int,
-//        permissions: Array<out String>,
-//        grantResults: IntArray
-//    ) {
-//        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-//        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-//            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//                onMapReady(mMap)
-//            } else {
-//                Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show()
-//            }
-//        }
-//    }
 
     private fun setupNavigation() {
         toolbar = findViewById(R.id.toolbar)

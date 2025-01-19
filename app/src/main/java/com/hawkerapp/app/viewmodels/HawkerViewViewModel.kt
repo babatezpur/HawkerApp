@@ -52,7 +52,7 @@ class HawkerViewViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
-    private fun loadHawkerInfo() {
+    fun loadHawkerInfo() {
         viewModelScope.launch(Dispatchers.IO) {
             val hawkerId = hawkerManager.getActiveHawkerId()
             val hawker = hawkerManager.getHawkerInfo(hawkerId)

@@ -2,6 +2,7 @@ package com.hawkerapp.app.managers
 
 import android.content.Context
 import android.util.Log
+import com.google.gson.JsonObject
 import com.hawkerapp.app.models.HawkerFormData
 import com.hawkerapp.app.models.HawkerInfo
 import com.hawkerapp.app.models.Item
@@ -33,7 +34,7 @@ class HawkerManager (private val context: Context) {
         return hawkerLoginDataRepository.getActiveHawkerId()
     }
 
-    fun storeHawkerData(hawkerInfo: HawkerInfo) {
+    fun storeHawkerData(hawkerInfo: HawkerFormData) {
         Log.d("fm", "storeHawkerData: $hawkerInfo")
         val hawkerData = HawkerFormData(
             0,
@@ -44,7 +45,8 @@ class HawkerManager (private val context: Context) {
             hawkerInfo.location,
             hawkerInfo.items,
             true,
-            hawkerInfo.imageUrl
+            hawkerInfo.imageurl,
+            hawkerInfo.createdAt
             )
         CoroutineScope(Dispatchers.IO).launch {
             insertHawkerLoginData(hawkerData)
@@ -80,22 +82,26 @@ class HawkerManager (private val context: Context) {
 
     }
 
-    suspend fun updateHawkerImage(context: Context, activeHawkerId: String?, imageUri: String): HawkerInfo? {
+    suspend fun updateHawkerImage(context: Context, activeHawkerId: String?, imageUri: String): HawkerFormData? {
         return updateHawkerField(context, activeHawkerId, "imageUrl", imageUri)
     }
 
-    suspend fun updateHawkerItems(context: Context, items: List<Item>): HawkerInfo? {
+    suspend fun updateHawkerItems(context: Context, items: List<Item>): HawkerFormData? {
         val activeHawkerId = getActiveHawkerId()
         return updateHawkerField(context, activeHawkerId, "items", items)
     }
 
+    suspend fun getHawkerCreatedDate(hawkerId: String): String? {
+        return hawkerLoginDataRepository.getHawkerCreatedDate(hawkerId)
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
-    private suspend fun updateHawkerField(
+    suspend fun updateHawkerField(
         context: Context,
         activeHawkerId: String?,
         field: String,
         value: Any
-    ): HawkerInfo? = withContext(Dispatchers.IO) {
+    ): HawkerFormData? = withContext(Dispatchers.IO) {
         return@withContext suspendCancellableCoroutine { continuation ->
             RetrofitHelper.updateHawkerFieldInServer(context, activeHawkerId, field, value) { updatedHawker ->
                 if (updatedHawker == null) {
@@ -108,5 +114,19 @@ class HawkerManager (private val context: Context) {
                 continuation.resume(updatedHawker) { }
             }
         }
+    }
+
+    suspend fun updateHawkerNameAndCategory(
+        context: Context,
+        hawkerId: String?,
+        name: String?,
+        category: String?
+    ): HawkerFormData? {
+        val profileUpdate = JsonObject().apply {
+            name?.let { addProperty("name", it) }
+            category?.let { addProperty("cat", it) }
+        }
+
+        return updateHawkerField(context, hawkerId, "profile", profileUpdate)
     }
 }

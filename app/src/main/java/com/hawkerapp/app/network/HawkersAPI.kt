@@ -51,7 +51,7 @@ interface HawkersAPI {
     fun sendHawkerData(
         @Header("Authorization") authHeader: String,
         @Body requestData: HawkerFormData
-    ): Call<HawkerInfo>
+    ): Call<HawkerFormData>
 
     @GET("hawkers/661b893356b89e0c1d7f4bcd/visit-requests")
     fun getVisitRequestsWithAuth(@Header("Authorization") authHeader: String?): Call<UserData>?
@@ -101,10 +101,10 @@ interface HawkersAPI {
     fun verifyOtp(@Body otpVerifyRequest: OtpVerifyRequest): Call<OtpVerificationResponse>
 
     @PATCH("hawkers/{id}")
-    fun updateImageForHawker(
+    fun updateDataForHawker(
         @Header("Authorization") authHeader: String,
         @Body requestData: JsonObject,
         @Path("id") id: String
-    ): Call<HawkerInfo>
+    ): Call<HawkerFormData>
 
 }

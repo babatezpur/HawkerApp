@@ -137,7 +137,7 @@ class HawkerFormActivity : AppCompatActivity() {
                     }
                     Toast.makeText(this, "Data sent successfully", Toast.LENGTH_SHORT).show()
                     hawkerManager.storeHawkerData(it)
-                    hawkerManager.markAllHawkersInactive(it.id)
+                    it.id?.let { it1 -> hawkerManager.markAllHawkersInactive(it1) }
                     val intent = Intent(this, HawkerViewActivity::class.java)
                     startActivity(intent)
                     finish()

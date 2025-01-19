@@ -3,7 +3,6 @@ package com.hawkerapp.app.network
 import android.content.Context
 import com.hawkerapp.app.models.HawkerInfo
 import android.util.Log
-import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.hawkerapp.app.models.CustomLocation
@@ -11,7 +10,6 @@ import com.hawkerapp.app.models.FCMData
 import com.hawkerapp.app.models.HawkerFormData
 import com.hawkerapp.app.models.ImageUrlData
 import com.hawkerapp.app.models.Item
-import com.hawkerapp.app.models.OtpResult
 import com.hawkerapp.app.models.OtpVerificationResponse
 import com.hawkerapp.app.models.OtpVerifyRequest
 import com.hawkerapp.app.models.UserData
@@ -21,8 +19,6 @@ import okhttp3.Credentials
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
-import okhttp3.RequestBody.Companion.asRequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -66,7 +62,7 @@ object RetrofitHelper {
         hawkerId: String?,
         field: String,
         value: Any,
-        onComplete: (HawkerInfo?) -> Unit
+        onComplete: (HawkerFormData?) -> Unit
     ) {
         if(hawkerId.isNullOrEmpty()) {
             Log.d("RetrofitHelper", "HawkerId is null/empty")
@@ -94,14 +90,17 @@ object RetrofitHelper {
         hawkerId: String,
         field: String,
         value: Any,
-        onComplete: (HawkerInfo?) -> Unit
+        onComplete: (HawkerFormData?) -> Unit
     ) {
         val token = SessionManager.getAuthToken(context) ?: run {
             onComplete(null)
             return
         }
 
-        val json = JsonObject()
+        var json = JsonObject()
+        if(field == "profile"){
+            json = value as JsonObject
+        }
         when(value) {
             is String -> json.addProperty(field, value)
             is Number -> json.addProperty(field, value)
@@ -127,20 +126,20 @@ object RetrofitHelper {
         Log.d("RetrofitHelper", "Json: $json")
 
         val hawkersFetchApi = getInstance().create(HawkersAPI::class.java)
-        val call = hawkersFetchApi.updateImageForHawker("Bearer $token", json, hawkerId)
+        val call = hawkersFetchApi.updateDataForHawker("Bearer $token", json, hawkerId)
 
-        call.enqueue(object : Callback<HawkerInfo> {
-            override fun onResponse(call: Call<HawkerInfo>, response: Response<HawkerInfo>) {
+        call.enqueue(object : Callback<HawkerFormData> {
+            override fun onResponse(call: Call<HawkerFormData>, response: Response<HawkerFormData>) {
                 if(response.isSuccessful) {
-                    Log.d("RetrofitHelper", "Field $field updated successfully : ${response.body()}")
+                    Log.d("RetrofitHelper", "$field updated successfully : ${response.body()}")
                     onComplete(response.body())
                 } else {
-                    Log.d("RetrofitHelper", "Unsuccessful update: $response")
+                    Log.d("RetrofitHelper", "update UNsuccesful: $response")
                     onComplete(null)
                 }
             }
 
-            override fun onFailure(call: Call<HawkerInfo>, t: Throwable) {
+            override fun onFailure(call: Call<HawkerFormData>, t: Throwable) {
                 Log.d("RetrofitHelper", "Error in update: ${t.message}")
                 onComplete(null)
             }
@@ -178,7 +177,7 @@ object RetrofitHelper {
         })
     }
 
-    fun sendHawkersData(context: Context,  hawkerData: HawkerFormData, onSuccess: (HawkerInfo?) -> Unit) {
+    fun sendHawkersData(context: Context,  hawkerData: HawkerFormData, onSuccess: (HawkerFormData?) -> Unit) {
         // Check if imagePath is not null or empty
         if (!hawkerData.imageurl.isNullOrEmpty()) {
             uploadImageAndGetPublicUrl(hawkerData.imageurl!!, { imageUrl ->
@@ -197,7 +196,7 @@ object RetrofitHelper {
         }
     }
 
-    private fun executeSendHawkersData(context: Context, hawkerData: HawkerFormData, onSuccess: (HawkerInfo?) -> Unit) {
+    private fun executeSendHawkersData(context: Context, hawkerData: HawkerFormData, onSuccess: (HawkerFormData?) -> Unit) {
         val basicAuth = Credentials.basic(newBuildConfig.API_USERNAME, newBuildConfig.API_PASSWORD)
 
         val token = SessionManager.getAuthToken(context) ?: run {
@@ -208,8 +207,8 @@ object RetrofitHelper {
         val hawkersFetchApi = getInstance().create(HawkersAPI::class.java)
 
         val call = hawkersFetchApi.sendHawkerData("Bearer $token", hawkerData)
-        call.enqueue(object : Callback<HawkerInfo> {
-            override fun onResponse(call: Call<HawkerInfo>, response: Response<HawkerInfo>) {
+        call.enqueue(object : Callback<HawkerFormData> {
+            override fun onResponse(call: Call<HawkerFormData>, response: Response<HawkerFormData>) {
                 Log.d("RetrofitHelper", "Response: ${response.body()}")
                 if(response.isSuccessful) {
                     onSuccess(response.body()!!)
@@ -218,7 +217,7 @@ object RetrofitHelper {
                 }
             }
 
-            override fun onFailure(call: Call<HawkerInfo>, t: Throwable) {
+            override fun onFailure(call: Call<HawkerFormData>, t: Throwable) {
                 Log.d("RetrofitHelper", "Error: ${t.message}")
 
             }
@@ -354,7 +353,7 @@ object RetrofitHelper {
                 call: Call<OtpVerificationResponse>,
                 response: Response<OtpVerificationResponse>
             ) {
-                Log.d("RetrofitHelper", "Response from verifyOtp: ${response}")
+                Log.d("RetrofitHelper", "Response from verifyOtp: ${response.body()?.hawkerData}")
                 callback(response)
             }
 

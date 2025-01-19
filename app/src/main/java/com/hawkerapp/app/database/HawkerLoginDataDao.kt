@@ -28,4 +28,7 @@ interface HawkerLoginDataDao {
 
     @Query("UPDATE hawker_data SET is_active = 0 WHERE id = :id")
     suspend fun logout(id: String?)
+
+    @Query("SELECT created_at FROM hawker_data WHERE id = :hawkerId")
+    suspend fun getHawkerCreatedDate(hawkerId: String): String?
 }

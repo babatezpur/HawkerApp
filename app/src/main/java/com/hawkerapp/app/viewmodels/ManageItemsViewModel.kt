@@ -44,7 +44,7 @@ class ManageItemsViewModel(application: Application) : AndroidViewModel(applicat
                     currentItems[index] = item
                     val updatedHawker = hawkerManager.updateHawkerItems(getApplication(), currentItems)
                     updatedHawker?.let {
-                        hawkerManager.updateItem(it.items)
+                        it.items?.let { it1 -> hawkerManager.updateItem(it1) }
                         loadItems() // Refresh the list
                         _updateStatus.postValue(true)
                     } ?: _updateStatus.postValue(false)
@@ -63,7 +63,7 @@ class ManageItemsViewModel(application: Application) : AndroidViewModel(applicat
                 currentItems.removeAll { it.name == item.name }
                 val updatedHawker = hawkerManager.updateHawkerItems(getApplication(), currentItems)
                 updatedHawker?.let {
-                    hawkerManager.updateItem(it.items)
+                    it.items?.let { it1 -> hawkerManager.updateItem(it1) }
                     loadItems() // Refresh the list
                     _updateStatus.postValue(true)
                 } ?: _updateStatus.postValue(false)
