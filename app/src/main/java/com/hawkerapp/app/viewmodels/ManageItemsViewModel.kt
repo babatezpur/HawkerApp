@@ -39,6 +39,7 @@ class ManageItemsViewModel(application: Application) : AndroidViewModel(applicat
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val currentItems = _items.value?.toMutableList() ?: mutableListOf()
+                Log.d("ManageItemsViewModel", "Current items: $currentItems")
                 val index = currentItems.indexOfFirst { it.name == item.name }
                 if (index != -1) {
                     currentItems[index] = item
@@ -51,6 +52,24 @@ class ManageItemsViewModel(application: Application) : AndroidViewModel(applicat
                 }
             } catch (e: Exception) {
                 Log.e("ManageItemsViewModel", "Error updating item: ${e.message}")
+                _updateStatus.postValue(false)
+            }
+        }
+    }
+
+    fun addNewItem(item: Item) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val currentItems = _items.value?.toMutableList() ?: mutableListOf()
+                currentItems.add(item)
+                val updatedHawker = hawkerManager.updateHawkerItems(getApplication(), currentItems)
+                updatedHawker?.let {
+                    it.items?.let { it1 -> hawkerManager.updateItem(it1) }
+                    loadItems()
+                    _updateStatus.postValue(true)
+                } ?: _updateStatus.postValue(false)
+            } catch (e: Exception) {
+                Log.e("ManageItemsViewModel", "Error adding item: ${e.message}")
                 _updateStatus.postValue(false)
             }
         }

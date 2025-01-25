@@ -13,6 +13,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.hawkerapp.app.R
 import com.hawkerapp.app.adapters.ManageItemsAdapter
 import com.hawkerapp.app.managers.HawkerManager
@@ -31,6 +32,11 @@ class ManageItemsActivity : AppCompatActivity() {
         viewModel = ViewModelProvider(this)[ManageItemsViewModel::class.java]
         setupRecyclerView()
         setupObservers()
+
+        findViewById<FloatingActionButton>(R.id.fabAddItem).setOnClickListener {
+            showAddItemDialog()
+        }
+
         viewModel.loadItems() // Initial load
     }
 
@@ -93,6 +99,36 @@ class ManageItemsActivity : AppCompatActivity() {
             }
             .setNegativeButton("No", null)
             .show()
+    }
+
+    private fun showAddItemDialog() {
+        val dialog = Dialog(this)
+        dialog.setContentView(R.layout.dialog_add_item)
+
+        val nameEditText = dialog.findViewById<EditText>(R.id.nameEditText)
+        val priceEditText = dialog.findViewById<EditText>(R.id.priceEditText)
+        val quantityEditText = dialog.findViewById<EditText>(R.id.quantityEditText)
+        val addButton = dialog.findViewById<Button>(R.id.addButton)
+
+        addButton.setOnClickListener {
+            val name = nameEditText.text.toString()
+            val price = priceEditText.text.toString().toIntOrNull()
+            val quantity = quantityEditText.text.toString().toIntOrNull()
+
+            if (name.isNotBlank() && price != null && quantity != null) {
+                val newItem = Item(
+                    name = name,
+                    price = price,
+                    quantity = quantity
+                )
+                viewModel.addNewItem(newItem)
+                dialog.dismiss()
+            } else {
+                Toast.makeText(this, "Please fill all fields with valid values", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        dialog.show()
     }
 
 //    private fun updateItem(updatedItems: List<Item>) {
