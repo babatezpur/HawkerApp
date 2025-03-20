@@ -45,6 +45,7 @@ google-services.json
 /captures
 .externalNativeBuild
 .cxx
+.git-credentials-personal
 
 # Ignore secret files
 secrets.properties
