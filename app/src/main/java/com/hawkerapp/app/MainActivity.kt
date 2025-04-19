@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import android.widget.Toast
+import androidx.cardview.widget.CardView
 import com.google.firebase.FirebaseApp
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -50,8 +51,8 @@ class MainActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.IO).launch {
             activeHawkerId = hawkerManager?.getActiveHawkerId()
         }
-        val btnHawker = findViewById<Button>(R.id.buttonHawker)
-        val btnUser = findViewById<Button>(R.id.buttonUser)
+        val btnHawker = findViewById<CardView>(R.id.cardViewHawker)
+        val btnUser = findViewById<CardView>(R.id.cardViewShopper)
         btnHawker.setOnClickListener {
             if (activeHawkerId != null) {
                 Toast.makeText(this, "Welcome back activeId: $activeHawkerId", Toast.LENGTH_SHORT).show()
