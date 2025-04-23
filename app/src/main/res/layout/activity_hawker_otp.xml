@@ -2,40 +2,84 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:padding="16dp">
 
+<!--    <TextView-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_marginBottom="16dp"-->
+<!--        android:text="New Hawker Registration"-->
+<!--        android:textAlignment="center"-->
+<!--        android:textSize="24sp"-->
+<!--        android:textStyle="bold" />-->
+
     <TextView
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        android:text="New Hawker Registration"
-        android:textAlignment="center"
+        android:layout_marginTop="50dp"
+        android:text="Enter your phone number"
         android:textSize="24sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:textColor="@color/black" />
 
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:text="Please enter your phone number to register"
-        android:textSize="18sp"
-        android:textStyle="bold" />
+        android:orientation="horizontal"
+        android:layout_marginTop="20dp">
 
-    <EditText
-        android:id="@+id/phone_edit_text"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:hint="Phone Number"
-        android:inputType="phone"
-        android:maxLength="10" />
+        <!-- Country code box -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="60dp"
+            android:background="@drawable/phone_input_background"
+            android:gravity="center_vertical"
+            android:paddingStart="15dp"
+            android:paddingEnd="15dp"
+            android:orientation="horizontal">
 
-    <Button
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:text="+91"
+                android:textColor="#000000" />
+
+<!--            <ImageView-->
+<!--                android:layout_width="16dp"-->
+<!--                android:layout_height="16dp"-->
+<!--                android:layout_marginStart="8dp"-->
+<!--                android:src="@drawable/ic_dropdown"-->
+<!--                android:contentDescription="Select country code" />-->
+        </LinearLayout>
+
+        <!-- Phone number box -->
+        <EditText
+            android:id="@+id/phone_edit_text"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_marginStart="10dp"
+            android:background="@drawable/phone_input_background"
+            android:hint="9876543210"
+            android:inputType="phone"
+            android:maxLength="10"
+            android:paddingStart="15dp"
+            android:paddingEnd="15dp"
+            android:textSize="16sp"
+            android:textColorHint="#80000000" />
+    </LinearLayout>
+
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/request_otp_button"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
+        android:layout_height="60dp"
+        android:backgroundTint="@color/primary_green"
+        android:layout_marginTop="20dp"
+        android:textSize="16sp"
+        app:cornerRadius="12dp"
         android:text="Request OTP" />
 
     <EditText
@@ -43,14 +87,19 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
+        android:layout_marginTop="30dp"
         android:hint="Enter OTP"
         android:inputType="number"
         android:maxLength="6" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/verify_otp_button"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="60dp"
+        android:layout_marginTop="10dp"
+        android:backgroundTint="@color/primary_green"
+        android:textSize="16sp"
+        app:cornerRadius="12dp"
         android:text="Verify OTP" />
 
     <ProgressBar
