@@ -33,13 +33,13 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         // Make the secrets available in BuildConfig
-        buildConfigField "String", "BASE_URL", "\"${secretsProperties['BASE_URL']}\""
-        buildConfigField "String", "API_USERNAME", "\"${secretsProperties['API_USERNAME']}\""
-        buildConfigField "String", "API_PASSWORD", "\"${secretsProperties['API_PASSWORD']}\""
-        buildConfigField "String", "MAPS_API_KEY", "\"${secretsProperties['MAP_API_KEY']}\""
+        buildConfigField "String", "BASE_URL", "\"${secretsProperties['BASE_URL'] ?: ''}\""
+        buildConfigField "String", "API_USERNAME", "\"${secretsProperties['API_USERNAME'] ?: ''}\""
+        buildConfigField "String", "API_PASSWORD", "\"${secretsProperties['API_PASSWORD'] ?: ''}\""
+        buildConfigField "String", "MAPS_API_KEY", "\"${secretsProperties['MAP_API_KEY'] ?: ''}\""
 
         manifestPlaceholders = [
-                MAPS_API_KEY: secretsProperties['MAP_API_KEY']
+                MAPS_API_KEY: secretsProperties['MAP_API_KEY'] ?: ''
         ]
 
     }

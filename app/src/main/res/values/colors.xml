@@ -2,4 +2,6 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="hawker_green">#FF4CAF50</color>
+    <color name="card_green">#FF43A047</color>
 </resources>

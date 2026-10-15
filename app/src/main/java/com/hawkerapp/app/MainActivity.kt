@@ -3,9 +3,10 @@ package com.hawkerapp.app
 import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.cardview.widget.CardView
+import androidx.core.content.ContextCompat
 import android.os.Bundle
 import android.util.Log
-import android.widget.Button
 import android.widget.Toast
 import com.google.firebase.FirebaseApp
 import com.google.firebase.messaging.FirebaseMessaging
@@ -33,6 +34,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        window.statusBarColor = ContextCompat.getColor(this, R.color.hawker_green)
 
         hawkerManager = HawkerManager(this)
 
@@ -50,9 +52,9 @@ class MainActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.IO).launch {
             activeHawkerId = hawkerManager?.getActiveHawkerId()
         }
-        val btnHawker = findViewById<Button>(R.id.buttonHawker)
-        val btnUser = findViewById<Button>(R.id.buttonUser)
-        btnHawker.setOnClickListener {
+        val cardHawker = findViewById<CardView>(R.id.cardHawker)
+        val cardShopper = findViewById<CardView>(R.id.cardShopper)
+        cardHawker.setOnClickListener {
             if (activeHawkerId != null) {
                 Toast.makeText(this, "Welcome back activeId: $activeHawkerId", Toast.LENGTH_SHORT).show()
                 startActivity(Intent(this, HawkerViewActivity::class.java))
@@ -61,9 +63,8 @@ class MainActivity : AppCompatActivity() {
                 val intent = Intent(this, HawkerOtpActivity::class.java)
                 startActivity(intent)
             }
-
         }
-        btnUser.setOnClickListener {
+        cardShopper.setOnClickListener {
             val intent = Intent(this, PreUserScreenSplashActivity::class.java)
             startActivity(intent)
         }
