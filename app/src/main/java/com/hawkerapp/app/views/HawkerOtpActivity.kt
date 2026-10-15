@@ -4,7 +4,9 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.text.Editable
+import android.text.Html
 import android.text.TextWatcher
 import android.view.View
 import android.widget.Button
@@ -35,7 +37,9 @@ class HawkerOtpActivity : AppCompatActivity() {
     private lateinit var loadingSpinnerPhone: ProgressBar
     private lateinit var loadingSpinnerOtp: ProgressBar
     private lateinit var resendOtpText: TextView
+    private lateinit var subtitleOtp: TextView
     private lateinit var otpDigits: List<EditText>
+    private var resendTimer: CountDownTimer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,6 +75,12 @@ class HawkerOtpActivity : AppCompatActivity() {
             findViewById(R.id.otp_digit_4),
             findViewById(R.id.otp_digit_5),
             findViewById(R.id.otp_digit_6)
+        )
+
+        subtitleOtp = findViewById(R.id.subtitle_otp)
+        subtitleOtp.text = Html.fromHtml(
+            "We have sent you an <b>One Time Password(OTP)</b> on this mobile number.",
+            Html.FROM_HTML_MODE_COMPACT
         )
 
         loadingSpinnerPhone.visibility = View.GONE
@@ -129,7 +139,13 @@ class HawkerOtpActivity : AppCompatActivity() {
         }
 
         viewModel.otpInputEnabled.observe(this) { enabled ->
-            if (enabled) showOtpScreen()
+            if (enabled) {
+                showOtpScreen()
+                requestOtpButton.text = "Continue  \u2192"
+                requestOtpButton.isEnabled = true
+                loadingSpinnerPhone.visibility = View.GONE
+                startResendCooldown()
+            }
         }
 
         viewModel.phoneInputEnabled.observe(this) { enabled ->
@@ -142,6 +158,9 @@ class HawkerOtpActivity : AppCompatActivity() {
 
         viewModel.errorMessage.observe(this) { message ->
             Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+            requestOtpButton.text = "Continue  \u2192"
+            requestOtpButton.isEnabled = true
+            loadingSpinnerPhone.visibility = View.GONE
         }
 
         viewModel.navigationEvent.observe(this) { event ->
@@ -234,7 +253,13 @@ class HawkerOtpActivity : AppCompatActivity() {
         }
 
         requestOtpButton.setOnClickListener {
-            viewModel.requestOtp(phoneEditText.text.toString())
+            val phone = phoneEditText.text.toString()
+            if (phone.length == 10) {
+                requestOtpButton.text = "Sending..."
+                requestOtpButton.isEnabled = false
+                loadingSpinnerPhone.visibility = View.VISIBLE
+            }
+            viewModel.requestOtp(phone)
         }
 
         verifyOtpButton.setOnClickListener {
@@ -245,9 +270,37 @@ class HawkerOtpActivity : AppCompatActivity() {
         }
 
         resendOtpText.setOnClickListener {
-            viewModel.requestOtp(phoneEditText.text.toString())
-            Toast.makeText(this, "OTP resent", Toast.LENGTH_SHORT).show()
+            if (resendOtpText.isEnabled) {
+                viewModel.requestOtp(phoneEditText.text.toString())
+                Toast.makeText(this, "OTP resent", Toast.LENGTH_SHORT).show()
+                startResendCooldown()
+            }
         }
+    }
+
+    private fun startResendCooldown() {
+        resendOtpText.isEnabled = false
+        resendTimer?.cancel()
+        resendTimer = object : CountDownTimer(30000, 1000) {
+            override fun onTick(millisUntilFinished: Long) {
+                val seconds = millisUntilFinished / 1000
+                resendOtpText.text = "Resend OTP in ${seconds}s"
+                resendOtpText.setTextColor(ContextCompat.getColor(this@HawkerOtpActivity, R.color.black))
+            }
+
+            override fun onFinish() {
+                resendOtpText.text = Html.fromHtml(
+                    "Didn't receive the OTP? <font color='#4CAF50'><b>Resend OTP</b></font>",
+                    Html.FROM_HTML_MODE_COMPACT
+                )
+                resendOtpText.isEnabled = true
+            }
+        }.start()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        resendTimer?.cancel()
     }
 
     override fun onRequestPermissionsResult(
