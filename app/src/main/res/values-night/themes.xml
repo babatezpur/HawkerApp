@@ -1,7 +1,11 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Base.Theme.HawkerApp" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+    <style name="Base.Theme.HawkerApp" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">@color/hawker_green</item>
+        <item name="colorPrimaryVariant">@color/card_green</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="android:colorPrimary">@color/hawker_green</item>
+        <item name="colorPrimaryContainer">@color/hawker_green</item>
+        <item name="android:statusBarColor">@color/hawker_green</item>
     </style>
 </resources>

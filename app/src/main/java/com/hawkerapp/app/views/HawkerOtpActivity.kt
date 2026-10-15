@@ -4,13 +4,16 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
+import android.widget.ViewFlipper
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
@@ -25,46 +28,108 @@ import android.content.IntentSender
 
 class HawkerOtpActivity : AppCompatActivity() {
     private lateinit var viewModel: HawkerOtpViewModel
+    private lateinit var viewFlipper: ViewFlipper
     private lateinit var phoneEditText: EditText
-    private lateinit var otpEditText: EditText
     private lateinit var requestOtpButton: Button
     private lateinit var verifyOtpButton: Button
-    private lateinit var loadingSpinner: ProgressBar
+    private lateinit var loadingSpinnerPhone: ProgressBar
+    private lateinit var loadingSpinnerOtp: ProgressBar
+    private lateinit var resendOtpText: TextView
+    private lateinit var otpDigits: List<EditText>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_hawker_otp)
+
+        window.statusBarColor = ContextCompat.getColor(this, R.color.white)
+        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
 
         viewModel = ViewModelProvider(this)[HawkerOtpViewModel::class.java]
 
         checkSMSPermissions()
         setupSMSReceiver()
         initializeViews()
+        setupOtpDigitNavigation()
         setupClickListeners()
         observeViewModel()
         requestHintPermission()
     }
 
     private fun initializeViews() {
-        loadingSpinner = findViewById(R.id.loading_spinner)
+        viewFlipper = findViewById(R.id.viewFlipper)
         phoneEditText = findViewById(R.id.phone_edit_text)
-        otpEditText = findViewById(R.id.otp_edit_text)
         requestOtpButton = findViewById(R.id.request_otp_button)
         verifyOtpButton = findViewById(R.id.verify_otp_button)
+        loadingSpinnerPhone = findViewById(R.id.loading_spinner_phone)
+        loadingSpinnerOtp = findViewById(R.id.loading_spinner)
+        resendOtpText = findViewById(R.id.resend_otp_text)
 
-        // Initially hide OTP related views
-        loadingSpinner.visibility = View.GONE
-        otpEditText.visibility = View.GONE
-        verifyOtpButton.visibility = View.GONE
+        otpDigits = listOf(
+            findViewById(R.id.otp_digit_1),
+            findViewById(R.id.otp_digit_2),
+            findViewById(R.id.otp_digit_3),
+            findViewById(R.id.otp_digit_4),
+            findViewById(R.id.otp_digit_5),
+            findViewById(R.id.otp_digit_6)
+        )
+
+        loadingSpinnerPhone.visibility = View.GONE
+        loadingSpinnerOtp.visibility = View.GONE
+    }
+
+    private fun setupOtpDigitNavigation() {
+        for (i in otpDigits.indices) {
+            otpDigits[i].addTextChangedListener(object : TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+                override fun afterTextChanged(s: Editable?) {
+                    if (s?.length == 1 && i < otpDigits.size - 1) {
+                        otpDigits[i + 1].requestFocus()
+                    }
+                }
+            })
+            otpDigits[i].setOnKeyListener { _, keyCode, event ->
+                if (keyCode == android.view.KeyEvent.KEYCODE_DEL &&
+                    event.action == android.view.KeyEvent.ACTION_DOWN &&
+                    otpDigits[i].text.isEmpty() && i > 0
+                ) {
+                    otpDigits[i - 1].requestFocus()
+                    otpDigits[i - 1].text.clear()
+                    true
+                } else {
+                    false
+                }
+            }
+        }
+    }
+
+    private fun getOtpFromDigits(): String {
+        return otpDigits.joinToString("") { it.text.toString() }
+    }
+
+    private fun setOtpDigits(otp: String) {
+        for (i in otpDigits.indices) {
+            if (i < otp.length) {
+                otpDigits[i].setText(otp[i].toString())
+            }
+        }
+    }
+
+    private fun showOtpScreen() {
+        viewFlipper.displayedChild = 1
+    }
+
+    private fun showPhoneScreen() {
+        viewFlipper.displayedChild = 0
     }
 
     private fun observeViewModel() {
         viewModel.loading.observe(this) { isLoading ->
-            loadingSpinner.visibility = if (isLoading) View.VISIBLE else View.GONE
+            loadingSpinnerOtp.visibility = if (isLoading) View.VISIBLE else View.GONE
         }
 
         viewModel.otpInputEnabled.observe(this) { enabled ->
-            otpEditText.visibility = if (enabled) View.VISIBLE else View.GONE
+            if (enabled) showOtpScreen()
         }
 
         viewModel.phoneInputEnabled.observe(this) { enabled ->
@@ -72,10 +137,7 @@ class HawkerOtpActivity : AppCompatActivity() {
         }
 
         viewModel.verifyButtonEnabled.observe(this) { enabled ->
-            verifyOtpButton.apply {
-                this.visibility = if (enabled) View.VISIBLE else View.GONE
-                this.isEnabled = enabled
-            }
+            verifyOtpButton.isEnabled = enabled
         }
 
         viewModel.errorMessage.observe(this) { message ->
@@ -122,6 +184,7 @@ class HawkerOtpActivity : AppCompatActivity() {
         }
     }
 
+    @Suppress("DEPRECATION")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == CREDENTIAL_PICKER_REQUEST && resultCode == RESULT_OK) {
@@ -155,14 +218,21 @@ class HawkerOtpActivity : AppCompatActivity() {
     private fun setupSMSReceiver() {
         SMSReceiver.otpListener = { otp ->
             runOnUiThread {
-                otpEditText.setText(otp)
-                // Optionally auto-verify the OTP
-                // verifyOtpButton.performClick()
+                setOtpDigits(otp)
             }
         }
     }
 
     private fun setupClickListeners() {
+        findViewById<ImageButton>(R.id.btn_back_phone).setOnClickListener {
+            finish()
+        }
+
+        findViewById<ImageButton>(R.id.btn_back_otp).setOnClickListener {
+            showPhoneScreen()
+            phoneEditText.isEnabled = true
+        }
+
         requestOtpButton.setOnClickListener {
             viewModel.requestOtp(phoneEditText.text.toString())
         }
@@ -170,8 +240,13 @@ class HawkerOtpActivity : AppCompatActivity() {
         verifyOtpButton.setOnClickListener {
             viewModel.verifyOtp(
                 phoneNumber = phoneEditText.text.toString(),
-                otp = otpEditText.text.toString()
+                otp = getOtpFromDigits()
             )
+        }
+
+        resendOtpText.setOnClickListener {
+            viewModel.requestOtp(phoneEditText.text.toString())
+            Toast.makeText(this, "OTP resent", Toast.LENGTH_SHORT).show()
         }
     }
 
