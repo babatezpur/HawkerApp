@@ -3,36 +3,45 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white">
+    android:background="@color/hawker_green">
 
     <ImageView
-        android:id="@+id/splashImage"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:src="@drawable/splash_img"
-        android:scaleType="centerCrop"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        android:id="@+id/splashTitle"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:adjustViewBounds="true"
+        android:src="@drawable/splash_title"
+        app:layout_constraintBottom_toTopOf="@id/splashIllustration"
         app:layout_constraintEnd_toEndOf="parent"
-        android:contentDescription="BazaarBuddy Logo"/>
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="packed"
+        app:layout_constraintVertical_bias="0.3"
+        android:contentDescription="Hawker Logo" />
+
+    <ImageView
+        android:id="@+id/splashIllustration"
+        android:layout_width="280dp"
+        android:layout_height="wrap_content"
+        android:adjustViewBounds="true"
+        android:layout_marginTop="24dp"
+        android:src="@drawable/splash_illustration"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/splashTitle"
+        app:layout_constraintBottom_toTopOf="@id/taglineText"
+        android:contentDescription="Shopping Illustration" />
 
     <TextView
-        android:id="@+id/welcomeText"
-        android:layout_width="match_parent"
+        android:id="@+id/taglineText"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Welcome to BazaarBuddy"
-        android:textSize="44sp"
-        android:textStyle="bold"
-        android:textColor="#FFFFFF"
-        android:shadowColor="#80000000"
-        android:shadowDx="2"
-        android:shadowDy="2"
-        android:shadowRadius="4"
-        android:gravity="center"
-        android:layout_marginTop="48dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"/>
+        android:layout_marginBottom="80dp"
+        android:text="Where Hawkers &amp; Shoppers Meet!"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -2,6 +2,7 @@ package com.hawkerapp.app.views
 
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import android.os.Bundle
 import androidx.lifecycle.lifecycleScope
 import com.hawkerapp.app.MainActivity
@@ -14,8 +15,8 @@ class SplashActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash)
 
-        // Hide the action bar if it exists
         supportActionBar?.hide()
+        window.statusBarColor = ContextCompat.getColor(this, R.color.hawker_green)
 
         // Use a coroutine to handle the delay
         lifecycleScope.launch {
