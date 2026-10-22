@@ -39,12 +39,11 @@ interface HawkersAPI {
     ): Call<List<UserRequestData>>
 
     @POST("hawkers/token")
-    @Headers(
-        "Content-Type: application/json",
-        "Authorization: Basic ZGV2cmFqOmphcnZlZA==",
-        "Cookie: JSESSIONID=7BF55B5F644787F928FEA318B4244E06"
-    )
-    fun sendFCMToken(@Body fcmData: FCMData) : Call<Void>
+    @Headers("Content-Type: application/json")
+    fun sendFCMToken(
+        @Header("Authorization") authHeader: String,
+        @Body fcmData: FCMData
+    ): Call<Void>
 
     @Headers("Content-Type: application/json")
     @POST("hawkers")
@@ -57,12 +56,9 @@ interface HawkersAPI {
     fun getVisitRequestsWithAuth(@Header("Authorization") authHeader: String?): Call<UserData>?
 
     @GET("hawkers")
-    @Headers(
-        "Content-Type: application/json",
-        "Authorization: Basic ZGV2cmFqOmphcnZlZA==",
-        "Cookie: JSESSIONID=7BF55B5F644787F928FEA318B4244E06"
-    )
+    @Headers("Content-Type: application/json")
     fun getHawkersWithItemAsync(
+        @Header("Authorization") authHeader: String,
         @Query("search") item: String,
         @Query("longitude") longitude: Double,
         @Query("latitude") latitude: Double
@@ -70,12 +66,11 @@ interface HawkersAPI {
 
 
     @POST("hawkers/visit-requests")
-    @Headers(
-        "Content-Type: application/json",
-        "Authorization: Basic ZGV2cmFqOmphcnZlZA==",
-        "Cookie: JSESSIONID=7BF55B5F644787F928FEA318B4244E06"
-    )
-    fun sendUserRequest(@Body requestBody: UserData?): Call<UserData>
+    @Headers("Content-Type: application/json")
+    fun sendUserRequest(
+        @Header("Authorization") authHeader: String,
+        @Body requestBody: UserData?
+    ): Call<UserData>
 
     @Multipart
     @POST("files/s3") // Endpoint for uploading the file
@@ -84,21 +79,19 @@ interface HawkersAPI {
         @Part file: MultipartBody.Part // The file to upload
     ): Call<ImageUrlData>
 
-    @POST("auth/send-otp") // Endpoint for sending OTP
-    @Headers(
-        "Content-Type: application/json",
-        "Authorization: Basic ZGV2cmFqOmphcnZlZA==",
-        "Cookie: JSESSIONID=7BF55B5F644787F928FEA318B4244E06"
-    )
-    fun requestOtp(@Body requestBody: String): Call<JsonObject>
+    @POST("auth/send-otp")
+    @Headers("Content-Type: application/json")
+    fun requestOtp(
+        @Header("Authorization") authHeader: String,
+        @Body requestBody: String
+    ): Call<JsonObject>
 
-    @POST("auth/verify-otp") // Endpoint for verifying OTP
-    @Headers(
-        "Content-Type: application/json",
-        "Authorization: Basic ZGV2cmFqOmphcnZlZA==",
-        "Cookie: JSESSIONID=7BF55B5F644787F928FEA318B4244E06"
-    )
-    fun verifyOtp(@Body otpVerifyRequest: OtpVerifyRequest): Call<OtpVerificationResponse>
+    @POST("auth/verify-otp")
+    @Headers("Content-Type: application/json")
+    fun verifyOtp(
+        @Header("Authorization") authHeader: String,
+        @Body otpVerifyRequest: OtpVerifyRequest
+    ): Call<OtpVerificationResponse>
 
     @PATCH("hawkers/{id}")
     fun updateDataForHawker(
