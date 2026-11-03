@@ -2,10 +2,12 @@ package com.hawkerapp.app.views
 
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.Toast
 import androidx.fragment.app.FragmentManager
 import com.hawkerapp.app.R
@@ -43,6 +45,9 @@ class HawkerFormActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_hawker_form)
 
+        window.statusBarColor = ContextCompat.getColor(this, R.color.white)
+        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+
         verifiedPhone = intent.getStringExtra("VERIFIED_PHONE")
         hawkerId = intent.getStringExtra("HAWKER_ID")
 
@@ -52,7 +57,17 @@ class HawkerFormActivity : AppCompatActivity() {
             return
         }
 
-        nextButton = findViewById<Button>(R.id.next_button)
+        findViewById<ImageButton>(R.id.btn_back).setOnClickListener {
+            if (currentFragment == FRAGMENT_B) {
+                loadFirstFragment()
+                currentFragment = FRAGMENT_A
+                nextButton.text = "Add products  \u2192"
+            } else {
+                finish()
+            }
+        }
+
+        nextButton = findViewById(R.id.next_button)
         nextButton.setOnClickListener {
             onNextButtonClicked()
         }
@@ -103,7 +118,7 @@ class HawkerFormActivity : AppCompatActivity() {
                             hawkerId,
                             fragmentA?.editTextName?.text.toString(),
                             fragmentA?.editTextCategory?.text.toString(),
-                            fragmentA?.editTextPhone?.text.toString(),
+                            verifiedPhone,
                             customLocation,
                             imageurl = fragmentA?.imageFile?.path
                         )
@@ -118,6 +133,7 @@ class HawkerFormActivity : AppCompatActivity() {
                 )
                 loadSecondFragment()
                 currentFragment = FRAGMENT_B
+                nextButton.text = "Submit"
             }
 
             FRAGMENT_B -> {

@@ -29,6 +29,7 @@ import com.hawkerapp.app.BuildConfig as newBuildConfig
 
 object RetrofitHelper {
     private const val baseUrl = newBuildConfig.BASE_URL
+    private val basicAuth = Credentials.basic(newBuildConfig.API_USERNAME, newBuildConfig.API_PASSWORD)
 
     private fun getInstance(): Retrofit {
         return Retrofit.Builder().baseUrl(baseUrl)
@@ -40,7 +41,7 @@ object RetrofitHelper {
 
     fun sendToken(fcmData : FCMData) {
         val api = getInstance().create(HawkersAPI::class.java)
-        val call = api.sendFCMToken(fcmData)
+        val call = api.sendFCMToken(basicAuth, fcmData)
         Log.d("RetrofitHelper", "Enqueuing the call for token to server")
         call.enqueue(object : Callback<Void> {
             override fun onResponse(call: Call<Void>, response: Response<Void>) {
@@ -159,7 +160,7 @@ object RetrofitHelper {
 
         val hawkersFetchApi = getInstance().create(HawkersAPI::class.java)
         // Call the API
-        val call = hawkersFetchApi.uploadFile("Basic ZGV2cmFqOmphcnZlZA==", filePart)
+        val call = hawkersFetchApi.uploadFile(basicAuth, filePart)
         call.enqueue(object : retrofit2.Callback<ImageUrlData> {
             override fun onResponse(call: Call<ImageUrlData>, response: retrofit2.Response<ImageUrlData>) {
                 if (response.isSuccessful) {
@@ -197,8 +198,6 @@ object RetrofitHelper {
     }
 
     private fun executeSendHawkersData(context: Context, hawkerData: HawkerFormData, onSuccess: (HawkerFormData?) -> Unit) {
-        val basicAuth = Credentials.basic(newBuildConfig.API_USERNAME, newBuildConfig.API_PASSWORD)
-
         val token = SessionManager.getAuthToken(context) ?: run {
             onSuccess(null)
             return
@@ -227,7 +226,7 @@ object RetrofitHelper {
 
     fun sendUserRequest(requestBody: UserData, onSuccess: (UserData) -> Unit) {
         val hawkersFetchApi = getInstance().create(HawkersAPI::class.java)
-        val call = hawkersFetchApi.sendUserRequest(requestBody)
+        val call = hawkersFetchApi.sendUserRequest(basicAuth, requestBody)
         call.enqueue(object : Callback<UserData> {
             override fun onResponse(call: Call<UserData>, response: Response<UserData>) {
                 Log.d("RetrofitHelper", "Response: ${response.body()}")
@@ -247,9 +246,6 @@ object RetrofitHelper {
     }
 
     fun fetchHawkersData( long : Double, lat: Double, onSuccess: (List<HawkerInfo>) -> Unit) {
-
-        val basicAuth = Credentials.basic(newBuildConfig.API_USERNAME, newBuildConfig.API_PASSWORD)
-
         val hawkersFetchApi = getInstance().create(HawkersAPI::class.java)
         val call = hawkersFetchApi.fetchHawkersAsync(basicAuth, long, lat)
         call.enqueue(object : Callback<List<HawkerInfo>> {
@@ -297,7 +293,7 @@ object RetrofitHelper {
 
     fun getHawkersWithItem(item: String, location: CustomLocation, onSuccess: (List<HawkerInfo>) -> Unit) {
         val hawkersApi = getInstance().create(HawkersAPI::class.java)
-        val call = hawkersApi.getHawkersWithItemAsync(item, location.longitude, location.latitude)
+        val call = hawkersApi.getHawkersWithItemAsync(basicAuth, item, location.longitude, location.latitude)
 
         call.enqueue(object : Callback<List<HawkerInfo>> {
             override fun onResponse(call: Call<List<HawkerInfo>>, response: Response<List<HawkerInfo>>) {
@@ -322,7 +318,7 @@ object RetrofitHelper {
     // In RetrofitHelper
     fun requestOtp(phoneNumber: String, callback: (Boolean) -> Unit) {
         val hawkersFetchApi = getInstance().create(HawkersAPI::class.java)
-        val call = hawkersFetchApi.requestOtp(phoneNumber)
+        val call = hawkersFetchApi.requestOtp(basicAuth, phoneNumber)
         call.enqueue(object : Callback<JsonObject> {
             override fun onResponse(call: Call<JsonObject>, response: Response<JsonObject>) {
                 Log.d("RetrofitHelper", "Response from request otp: ${response.body()}")
@@ -335,17 +331,15 @@ object RetrofitHelper {
             }
 
             override fun onFailure(call: Call<JsonObject>, t: Throwable) {
-                Log.d("RetrofitHelper", "Failure !! Error: ${t.message}")
-
+                Log.e("RetrofitHelper", "requestOtp failed: ${t.message}")
+                callback(false)
             }
         })
-        return callback(true);
-        // Implementation to make API call to request OTP
     }
 
     fun verifyOtp(otpVerifyRequest: OtpVerifyRequest, callback: (Response<OtpVerificationResponse>) -> Unit) {
         val hawkersFetchApi = getInstance().create(HawkersAPI::class.java)
-        val call = hawkersFetchApi.verifyOtp(otpVerifyRequest)
+        val call = hawkersFetchApi.verifyOtp(basicAuth, otpVerifyRequest)
 
         call.enqueue(object : Callback<OtpVerificationResponse> {
 
@@ -353,13 +347,16 @@ object RetrofitHelper {
                 call: Call<OtpVerificationResponse>,
                 response: Response<OtpVerificationResponse>
             ) {
-                Log.d("RetrofitHelper", "Response from verifyOtp: ${response.body()?.hawkerData}")
+                if (response.isSuccessful) {
+                    Log.d("RetrofitHelper", "verifyOtp success: hawkerData=${response.body()?.hawkerData}, token=${response.body()?.token != null}")
+                } else {
+                    Log.e("RetrofitHelper", "verifyOtp failed: code=${response.code()} message=${response.message()}")
+                }
                 callback(response)
             }
 
             override fun onFailure(call: Call<OtpVerificationResponse>, t: Throwable) {
-                Log.e("RetrofitHelper", "Failure !! Error: ${t.message}")
-                // You might want to create an error response or handle this differently
+                Log.e("RetrofitHelper", "verifyOtp network error: ${t.message}")
             }
         })
     }

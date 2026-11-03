@@ -13,6 +13,11 @@
 
     <style name="Theme.HawkerApp" parent="Base.Theme.HawkerApp" />
 
+    <style name="CircleImageView" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
     <style name="OtpDigitBox">
         <item name="android:background">@drawable/bg_otp_box</item>
         <item name="android:gravity">center</item>
